@@ -27,15 +27,15 @@ class SettingManager(object):
         self[key] = value
 
 
-
 class TaskManager(object):
-    def __init__(self, sync=1):
-        self.current_task: Final[set] = set()
+    def __init__(self, sync: int):
+        self.current_task: Final[list] = list()
+        self._token: Final[dict] = dict()
         self.semaphore = Semaphore(sync)
 
     def create_task(self, coroutine) -> Task:
         task = asyncio.create_task(coroutine)
-        self.current_task.add(task)
+        self.current_task.append(task)
 
         def done_callback(_fut: Future):
             self.current_task.remove(task)
@@ -43,6 +43,17 @@ class TaskManager(object):
 
         task.add_done_callback(done_callback)
         return task
+
+    @property
+    def current_verify(self):
+        if self._token:
+            return self._token[self.current_task.index(asyncio.current_task())]
+        else:
+            return None
+
+    @current_verify.setter
+    def current_verify(self, val):
+        self._token[self.current_task.index(asyncio.current_task())] = val
 
     def all_done(self):
         return len(self.current_task) == 0
