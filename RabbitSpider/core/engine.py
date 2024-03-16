@@ -57,10 +57,6 @@ class Engine(ABC):
         """请求前"""
         return ret
 
-    async def close_spider(self):
-        """任务结束"""
-        pass
-
     async def routing(self, result):
         if isinstance(result, AsyncGenerator):
             async for req in result:
@@ -132,4 +128,3 @@ class Engine(ABC):
     async def run(self):
         await self.start_spider()
         await self.crawl()
-        await self.close_spider()
