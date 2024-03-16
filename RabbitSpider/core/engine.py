@@ -108,7 +108,7 @@ class Engine(ABC):
         try:
             logger.info(f'消费数据{ret}')
             response = await self.download.fetch(self.session, ret)
-        except Exception as e:
+        except Exception:
             print_exc()
             response = None
         if response and response.status in self.allow_status_code:
@@ -117,7 +117,7 @@ class Engine(ABC):
                 result = callback(Request(**ret), response)
                 if result:
                     await self.routing(result)
-            except Exception as e:
+            except Exception:
                 print_exc()
                 for task in asyncio.all_tasks():
                     task.cancel()

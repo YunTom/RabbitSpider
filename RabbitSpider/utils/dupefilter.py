@@ -4,9 +4,8 @@ import redis
 
 
 class RFPDupeFilter(object):
-    def __init__(self, name, repeat, host,
+    def __init__(self, repeat, host,
                  port, db, password=None):
-        self.name = name
         self.repeat = repeat
         self.redis = redis.StrictRedis(host=host, port=port, db=db, password=password)
 

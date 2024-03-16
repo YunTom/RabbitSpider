@@ -7,8 +7,7 @@ from RabbitSpider.core.scheduler import Scheduler
 setting = SettingManager()
 download = Download()
 
-redis_filter = RFPDupeFilter(setting.get('REDIS_QUEUE_NAME'),
-                             setting.get('REDIS_FILTER_NAME'),
+redis_filter = RFPDupeFilter(setting.get('REDIS_FILTER_NAME'),
                              setting.get('REDIS_QUEUE_HOST'),
                              setting.get('REDIS_QUEUE_PORT'),
                              setting.get('REDIS_QUEUE_DB'))
