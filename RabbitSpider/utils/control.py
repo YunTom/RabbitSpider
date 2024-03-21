@@ -46,10 +46,7 @@ class TaskManager(object):
 
     @property
     def current_verify(self):
-        if self._token:
-            return self._token[self.current_task.index(asyncio.current_task())]
-        else:
-            return None
+        return self._token.get(self.current_task.index(asyncio.current_task()))
 
     @current_verify.setter
     def current_verify(self, val):

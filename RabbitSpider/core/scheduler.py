@@ -37,7 +37,7 @@ class Scheduler(object):
         async with self.channel_pool.acquire() as channel:
             queue = await channel.declare_queue(name=queue, durable=True, passive=True,
                                                 arguments={"x-max-priority": 10})
-            return await queue.get()
+            return await queue.get(timeout=30)
 
     async def delete_queue(self, queue: str):
         async with self.channel_pool.acquire() as channel:
