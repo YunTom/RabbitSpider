@@ -3,7 +3,6 @@ import os
 import sys
 import pickle
 from traceback import print_exc
-from datetime import datetime
 from collections.abc import AsyncGenerator, Coroutine
 from abc import ABC, abstractmethod
 from typing import Optional
@@ -17,8 +16,6 @@ from RabbitSpider.utils.control import TaskManager
 from RabbitSpider.utils.expections import RabbitExpect
 from RabbitSpider.http.request import Request
 from loguru import logger
-
-logger.add(f'./spider_log/{datetime.strftime(datetime.now(), "%Y-%m-%d")}.log', rotation="1 day")
 
 
 class Engine(ABC):
@@ -100,7 +97,7 @@ class Engine(ABC):
                 print(incoming_message)
 
     async def deal_resp(self, incoming_message: AbstractIncomingMessage):
-        ret = pickle.loads(incoming_message.body)
+        ret = self.before_request(pickle.loads(incoming_message.body))
         try:
             logger.info(f'消费数据{ret}')
             response = await self.download.fetch(self.session, ret)

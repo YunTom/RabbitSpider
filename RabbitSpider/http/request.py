@@ -14,7 +14,7 @@ class Request(BaseModel):
     headers: Optional[dict] = {}
     timeout: Optional[int] = 10
     cookies: Optional[dict] = None
-    proxy: Optional[dict] = None
+    proxy: Optional[str] = None
     allow_redirects: Optional[bool] = True
     callback: Callable | str = 'parse'
     retry: Optional[int] = 1
