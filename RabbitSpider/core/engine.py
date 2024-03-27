@@ -92,6 +92,9 @@ class Engine(ABC):
                     break
                 else:
                     continue
+            except Exception:
+                print_exc()
+                break
             if incoming_message:
                 await self.task_manager.semaphore.acquire()
                 self.task_manager.create_task(self.deal_resp(session, incoming_message))

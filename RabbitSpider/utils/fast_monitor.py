@@ -12,6 +12,7 @@ from fastapi.encoders import jsonable_encoder
 from sqlalchemy.orm.session import sessionmaker
 from sqlalchemy import create_engine, Table, MetaData, select, update, insert, delete
 
+connection, channel = scheduler.connect()
 engine = create_engine('mysql+pymysql://root:123456@127.0.0.1:3306/monitor')
 table = Table('monitor_table', MetaData(), autoload_with=engine)
 
@@ -87,7 +88,7 @@ async def start_task(item: TaskData):
 
 @app.post('/delete/queue')
 async def delete_queue(item: TaskData):
-    await scheduler.delete_queue(item.name)
+    await scheduler.delete_queue(channel,item.name)
     stmt = delete(table).where(table.columns.name == item.name)
     session.execute(stmt)
     session.commit()
