@@ -6,9 +6,6 @@ from RabbitSpider.utils.rabbit_go import go
 
 
 class Test(Engine):
-    def __init__(self, sync):
-        super().__init__(sync)
-        self.consuming = False
 
     async def start_requests(self):
         for i in range(100):

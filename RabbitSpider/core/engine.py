@@ -24,7 +24,7 @@ class Engine(ABC):
         self.queue = os.path.basename(sys.argv[0])
         self.allow_status_code: list = [200]
         self.max_retry: int = max_retry
-        self.filter = redis_filter
+        self.redis_filter = redis_filter
         self.download = download
         self.connection, self.channel = scheduler.connect()
         self.task_manager = TaskManager(sync)
@@ -59,7 +59,7 @@ class Engine(ABC):
                 if isinstance(req, Request):
                     ret = pickle.dumps(req.model_dump())
                     if req.dupe_filter:
-                        if self.filter.request_seen(ret):
+                        if self.redis_filter.request_seen(ret):
                             logger.info(f'生产数据{req.model_dump()}')
                             await scheduler.producer(self.channel, queue=self.queue, body=ret)
                     else:
