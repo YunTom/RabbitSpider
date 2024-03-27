@@ -20,18 +20,17 @@ from loguru import logger
 
 class Engine(ABC):
     def __init__(self, sync):
-        self.session = None
         self.consuming = False
         self.queue = os.path.basename(sys.argv[0])
         self.allow_status_code: list = [200]
         self.max_retry: int = max_retry
         self.filter = redis_filter
         self.download = download
-        self.scheduler = scheduler
+        self.connection, self.channel = scheduler.connect()
         self.task_manager = TaskManager(sync)
 
     async def start_spider(self):
-        await self.scheduler.create_queue(self.queue)
+        await scheduler.create_queue(self.channel, self.queue)
         start_request = self.start_requests()
         await self.routing(start_request)
 
@@ -62,10 +61,10 @@ class Engine(ABC):
                     if req.dupe_filter:
                         if self.filter.request_seen(ret):
                             logger.info(f'生产数据{req.model_dump()}')
-                            await self.scheduler.producer(queue=self.queue, body=ret)
+                            await scheduler.producer(self.channel, queue=self.queue, body=ret)
                     else:
                         logger.info(f'生产数据{req.model_dump()}')
-                        await self.scheduler.producer(queue=self.queue, body=ret)
+                        await scheduler.producer(self.channel, queue=self.queue, body=ret)
 
                 elif isinstance(req, dict):
                     await self.save_item(req)
@@ -75,32 +74,35 @@ class Engine(ABC):
             raise RabbitExpect('回调函数返回类型错误！')
 
     async def crawl(self):
-        self.session = await self.download.new_session()
+        session = await self.download.new_session()
         while True:
             try:
-                incoming_message: Optional[AbstractIncomingMessage] = await self.scheduler.consumer(queue=self.queue)
+                incoming_message: Optional[AbstractIncomingMessage] = await scheduler.consumer(self.channel,
+                                                                                               queue=self.queue)
             except QueueEmpty:
                 if self.consuming:
                     logger.info('没有任务数据！')
                     await asyncio.sleep(3)
                     continue
                 elif self.task_manager.all_done():
-                    await self.download.exit(self.session)
-                    await self.scheduler.delete_queue(self.queue)
+                    await self.download.exit(session)
+                    await scheduler.delete_queue(self.channel, self.queue)
+                    await self.channel.close()
+                    await self.connection.close()
                     break
                 else:
                     continue
             if incoming_message:
                 await self.task_manager.semaphore.acquire()
-                self.task_manager.create_task(self.deal_resp(incoming_message))
+                self.task_manager.create_task(self.deal_resp(session, incoming_message))
             else:
                 print(incoming_message)
 
-    async def deal_resp(self, incoming_message: AbstractIncomingMessage):
+    async def deal_resp(self, session, incoming_message: AbstractIncomingMessage):
         ret = self.before_request(pickle.loads(incoming_message.body))
         try:
             logger.info(f'消费数据{ret}')
-            response = await self.download.fetch(self.session, ret)
+            response = await self.download.fetch(session, ret)
         except Exception:
             print_exc()
             response = None
@@ -117,7 +119,7 @@ class Engine(ABC):
         else:
             if ret['retry'] < self.max_retry:
                 ret['retry'] += 1
-                await self.scheduler.producer(queue=self.queue, body=pickle.dumps(ret), priority=ret['retry'])
+                await scheduler.producer(self.channel, queue=self.queue, body=pickle.dumps(ret), priority=ret['retry'])
             else:
                 logger.error(f'请求失败{ret}')
         await incoming_message.ack()

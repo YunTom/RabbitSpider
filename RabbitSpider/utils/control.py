@@ -30,7 +30,6 @@ class SettingManager(object):
 class TaskManager(object):
     def __init__(self, sync: int):
         self.current_task: Final[list] = list()
-        self._token: Final[dict] = dict()
         self.semaphore = Semaphore(sync)
 
     def create_task(self, coroutine) -> Task:
@@ -43,14 +42,6 @@ class TaskManager(object):
 
         task.add_done_callback(done_callback)
         return task
-
-    @property
-    def current_verify(self):
-        return self._token.get(self.current_task.index(asyncio.current_task()))
-
-    @current_verify.setter
-    def current_verify(self, val):
-        self._token[self.current_task.index(asyncio.current_task())] = val
 
     def all_done(self):
         return len(self.current_task) == 0
