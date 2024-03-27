@@ -27,4 +27,4 @@ class Test(Engine):
 
 
 if __name__ == '__main__':
-    go(Test, 'auto', 1)
+    go(Test, 'auto', 1, 3)
