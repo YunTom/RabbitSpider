@@ -36,9 +36,10 @@ def main(spider, mode, sync, timer):
             loop.run_until_complete(rabbit.crawl())
         else:
             raise RabbitExpect('执行模式错误！')
-        requests.post('http://127.0.0.1:8000/post/task',
-                      json={'name': rabbit.queue,
-                            'next_time': (datetime.now() + timedelta(minutes=timer)).strftime('%Y-%m-%d %H:%M:%S')})
+        if timer:
+            requests.post('http://127.0.0.1:8000/post/task',
+                          json={'name': rabbit.queue,
+                                'next_time': (datetime.now() + timedelta(minutes=timer)).strftime('%Y-%m-%d %H:%M:%S')})
     except Exception:
         print_exc()
 
