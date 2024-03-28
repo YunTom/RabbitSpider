@@ -60,10 +60,10 @@ class Engine(ABC):
                     ret = pickle.dumps(req.model_dump())
                     if req.dupe_filter:
                         if self.redis_filter.request_seen(ret):
-                            logger.info(f'生产数据{req.model_dump()}')
+                            logger.info(f'生产数据：{req.model_dump()}')
                             await scheduler.producer(self.channel, queue=self.queue, body=ret)
                     else:
-                        logger.info(f'生产数据{req.model_dump()}')
+                        logger.info(f'生产数据：{req.model_dump()}')
                         await scheduler.producer(self.channel, queue=self.queue, body=ret)
 
                 elif isinstance(req, dict):
@@ -104,7 +104,7 @@ class Engine(ABC):
     async def deal_resp(self, session, incoming_message: AbstractIncomingMessage):
         ret = self.before_request(pickle.loads(incoming_message.body))
         try:
-            logger.info(f'消费数据{ret}')
+            logger.info(f'消费数据：{ret}')
             response = await self.download.fetch(session, ret)
         except Exception:
             print_exc()
@@ -124,7 +124,7 @@ class Engine(ABC):
                 ret['retry'] += 1
                 await scheduler.producer(self.channel, queue=self.queue, body=pickle.dumps(ret), priority=ret['retry'])
             else:
-                logger.error(f'请求失败{ret}')
+                logger.error(f'请求失败：{ret}')
         await incoming_message.ack()
 
     async def run(self):
