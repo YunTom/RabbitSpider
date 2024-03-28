@@ -1,7 +1,6 @@
 import sys
 import asyncio
 import time
-
 import requests
 from datetime import datetime, timedelta
 from RabbitSpider import setting
@@ -40,6 +39,8 @@ def main(spider, mode, sync, timer):
             requests.post('http://127.0.0.1:8000/post/task',
                           json={'name': rabbit.queue,
                                 'next_time': (datetime.now() + timedelta(minutes=timer)).strftime('%Y-%m-%d %H:%M:%S')})
+        else:
+            requests.post('http://127.0.0.1:8000/delete/queue', json={'name': rabbit.queue})
     except Exception:
         print_exc()
 
