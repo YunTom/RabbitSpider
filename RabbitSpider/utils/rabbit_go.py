@@ -3,7 +3,6 @@ import asyncio
 import time
 import requests
 from datetime import datetime, timedelta
-from RabbitSpider import setting
 from traceback import print_exc
 from signal import signal, SIGINT, SIGTERM
 from RabbitSpider.utils.expections import RabbitExpect
@@ -32,6 +31,7 @@ def main(spider, mode, sync, timer):
         elif mode == 'm':
             loop.run_until_complete(rabbit.start_spider())
         elif mode == 'w':
+            rabbit.consuming = True
             loop.run_until_complete(rabbit.crawl())
         else:
             raise RabbitExpect('执行模式错误！')
@@ -45,7 +45,7 @@ def main(spider, mode, sync, timer):
         print_exc()
 
 
-def go(spider: object, mode: str = 'auto', sync: int = setting.get('ASYNC_CONT'), timer: int = 0):
+def go(spider: object, mode: str = 'auto', sync: int = 1, timer: int = 0):
     for i in sys.argv[1:]:
         key, value = i.split('=')
         if key == 'mode':

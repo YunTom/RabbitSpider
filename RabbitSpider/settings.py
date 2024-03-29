@@ -13,5 +13,4 @@ REDIS_QUEUE_DB = 1
 
 # 重试最大次数
 MAX_RETRY = 5
-# 协程并发数
-ASYNC_CONT = 10
+
