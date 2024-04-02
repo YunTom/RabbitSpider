@@ -8,7 +8,6 @@ from abc import ABC, abstractmethod
 from typing import Optional
 from aio_pika.abc import AbstractIncomingMessage
 from aio_pika.exceptions import QueueEmpty
-from RabbitSpider import redis_filter
 from RabbitSpider import download
 from RabbitSpider import scheduler
 from RabbitSpider import max_retry
@@ -24,7 +23,6 @@ class Engine(ABC):
         self.queue = os.path.basename(sys.argv[0])
         self.allow_status_code: list = [200]
         self.max_retry: int = max_retry
-        self.redis_filter = redis_filter
         self.download = download
         self.connection, self.channel = scheduler.connect()
         self.task_manager = TaskManager(sync)
@@ -58,13 +56,8 @@ class Engine(ABC):
             async for req in result:
                 if isinstance(req, Request):
                     ret = pickle.dumps(req.model_dump())
-                    if req.dupe_filter:
-                        if self.redis_filter.request_seen(ret):
-                            logger.info(f'生产数据：{req.model_dump()}')
-                            await scheduler.producer(self.channel, queue=self.queue, body=ret)
-                    else:
-                        logger.info(f'生产数据：{req.model_dump()}')
-                        await scheduler.producer(self.channel, queue=self.queue, body=ret)
+                    logger.info(f'生产数据：{req.model_dump()}')
+                    await scheduler.producer(self.channel, queue=self.queue, body=ret)
 
                 elif isinstance(req, dict):
                     await self.save_item(req)
