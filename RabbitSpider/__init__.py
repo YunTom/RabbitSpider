@@ -1,10 +1,8 @@
-import sys, os
 from RabbitSpider.utils.control import SettingManager
 from RabbitSpider.utils.control import TaskManager
 from RabbitSpider.core.download import Download
 from RabbitSpider.core.scheduler import Scheduler
 
-sys.path.append(os.path.abspath('.'))
 setting = SettingManager()
 download = Download()
 
