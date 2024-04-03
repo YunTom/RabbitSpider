@@ -20,7 +20,6 @@ from loguru import logger
 
 class Engine(ABC):
     def __init__(self, sync):
-        self.consuming = False
         self.queue = os.path.basename(sys.argv[0])
         self.allow_status_code: list = [200]
         self.max_retry: int = max_retry
@@ -80,11 +79,7 @@ class Engine(ABC):
                 incoming_message: Optional[AbstractIncomingMessage] = await scheduler.consumer(self.channel,
                                                                                                queue=self.queue)
             except QueueEmpty:
-                if self.consuming:
-                    logger.info('没有任务数据！')
-                    await asyncio.sleep(3)
-                    continue
-                elif self.task_manager.all_done():
+                if self.task_manager.all_done():
                     await self.download.exit(session)
                     await scheduler.delete_queue(self.channel, self.queue)
                     await self.channel.close()

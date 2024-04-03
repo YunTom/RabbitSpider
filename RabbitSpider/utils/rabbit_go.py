@@ -31,7 +31,6 @@ def main(spider, mode, sync, timer):
         elif mode == 'm':
             loop.run_until_complete(rabbit.start_spider())
         elif mode == 'w':
-            rabbit.consuming = True
             loop.run_until_complete(rabbit.crawl())
         else:
             raise RabbitExpect('执行模式错误！')
