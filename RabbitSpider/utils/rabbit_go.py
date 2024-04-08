@@ -26,14 +26,7 @@ def main(spider, mode, sync, timer):
     try:
         requests.post('http://127.0.0.1:8000/post/task',
                       json={'name': rabbit.queue, 'ip_address': '127.0.0.1', 'sync': sync, 'status': 1})
-        if mode == 'auto':
-            loop.run_until_complete(rabbit.run())
-        elif mode == 'm':
-            loop.run_until_complete(rabbit.start_spider())
-        elif mode == 'w':
-            loop.run_until_complete(rabbit.crawl())
-        else:
-            raise RabbitExpect('执行模式错误！')
+        loop.run_until_complete(rabbit.run(mode))
         if timer:
             requests.post('http://127.0.0.1:8000/post/task',
                           json={'name': rabbit.queue,

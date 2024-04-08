@@ -1,17 +1,24 @@
 import requests
 import uvicorn
 from starlette.middleware.cors import CORSMiddleware
-from RabbitSpider import setting
-from RabbitSpider import scheduler
 from pydantic import BaseModel
 from fastapi import FastAPI
 from typing import Optional
 from datetime import datetime
+from RabbitSpider.core.scheduler import Scheduler
+from RabbitSpider.utils.control import SettingManager
 from requests.auth import HTTPBasicAuth
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy.orm.session import sessionmaker
 from sqlalchemy import create_engine, Table, MetaData, select, update, insert, delete
 
+settings = SettingManager()
+
+scheduler = Scheduler(settings.get('RABBIT_USERNAME'),
+                      settings.get('RABBIT_PASSWORD'),
+                      settings.get('RABBIT_HOST'),
+                      settings.get('RABBIT_PORT'),
+                      settings.get('RABBIT_VIRTUAL_HOST'))
 connection, channel = scheduler.connect()
 engine = create_engine('mysql+pymysql://root:123456@127.0.0.1:3306/monitor')
 table = Table('monitor_table', MetaData(), autoload_with=engine)
@@ -53,8 +60,8 @@ async def get_task():
     for result in results:
         item = TaskData.model_validate(result).model_dump()
         res = requests.get(
-            f'http://{setting.get("RABBIT_HOST")}:15672/api/queues?page=1&page_size=100&name={item["name"]}&use_regex=false&pagination=true',
-            auth=HTTPBasicAuth(username=setting.get("RABBIT_USERNAME"), password=setting.get("RABBIT_PASSWORD")))
+            f'http://{settings.get("RABBIT_HOST")}:15672/api/queues?page=1&page_size=100&name={item["name"]}&use_regex=false&pagination=true',
+            auth=HTTPBasicAuth(username=settings.get("RABBIT_USERNAME"), password=settings.get("RABBIT_PASSWORD")))
         item['total'] = res.json()['items'][0]['messages']
         resp.append(item)
     return resp
@@ -88,7 +95,7 @@ async def start_task(item: TaskData):
 
 @app.post('/delete/queue')
 async def delete_queue(item: TaskData):
-    await scheduler.delete_queue(channel,item.name)
+    await scheduler.delete_queue(channel, item.name)
     stmt = delete(table).where(table.columns.name == item.name)
     session.execute(stmt)
     session.commit()
