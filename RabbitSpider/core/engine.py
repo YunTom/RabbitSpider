@@ -8,7 +8,6 @@ from collections.abc import AsyncGenerator, Coroutine
 from traceback import print_exc
 from typing import Optional
 from aio_pika.abc import AbstractIncomingMessage
-from RabbitSpider.core.download import Download
 from RabbitSpider.core.scheduler import Scheduler
 from aio_pika.exceptions import QueueEmpty, ChannelClosed
 from RabbitSpider.utils.control import SettingManager
@@ -16,20 +15,24 @@ from RabbitSpider.utils.dupefilter import RFPDupeFilter
 from RabbitSpider.http.request import Request
 from RabbitSpider.utils.control import TaskManager
 from RabbitSpider.utils.expections import RabbitExpect
+from RabbitSpider.core.download import CurlDownload, AiohttpDownload
 
 
 class Engine(ABC):
+    queue = os.path.basename(sys.argv[0])
+    allow_status_code: list = [200]
+    max_retry: int = 5
+    http2 = False
+    tls = 'chrome120'
+
     def __init__(self, sync):
         self._filter = None
         self._scheduler = None
         self._connection = None
         self._channel = None
+        self._download = None
         self._sync = sync
-        self.download = Download()
         self.settings = SettingManager()
-        self.queue = os.path.basename(sys.argv[0])
-        self.allow_status_code: list = [200]
-        self.max_retry: int = self.settings.get('MAX_RETRY')
         self.task_manager = TaskManager(self._sync)
 
     async def start_spider(self):
@@ -77,14 +80,14 @@ class Engine(ABC):
             raise RabbitExpect('回调函数返回类型错误！')
 
     async def crawl(self):
-        session = await self.download.new_session()
+        session = await self._download.new_session()
         while True:
             try:
                 incoming_message: Optional[AbstractIncomingMessage] = await self._scheduler.consumer(self._channel,
                                                                                                      queue=self.queue)
             except QueueEmpty:
                 if self.task_manager.all_done():
-                    await self.download.exit(session)
+                    await self._download.exit(session)
                     await self._scheduler.delete_queue(self._channel, self.queue)
                     await self._channel.close()
                     await self._connection.close()
@@ -102,7 +105,7 @@ class Engine(ABC):
                 print(incoming_message)
 
     async def consume(self):
-        session = await self.download.new_session()
+        session = await self._download.new_session()
         while True:
             try:
                 await self._scheduler.consumer(self._channel, queue=self.queue, callback=self.deal_resp,
@@ -117,7 +120,7 @@ class Engine(ABC):
         ret = self.before_request(pickle.loads(incoming_message.body))
         try:
             logger.info(f'消费数据：{ret}')
-            response = await self.download.fetch(session, ret)
+            response = await self._download.fetch(session, ret)
         except Exception:
             print_exc()
             response = None
@@ -141,7 +144,6 @@ class Engine(ABC):
         await incoming_message.ack()
 
     async def run(self, mode):
-
         self._filter = RFPDupeFilter(self.settings.get('REDIS_FILTER_NAME'),
                                      self.settings.get('REDIS_QUEUE_HOST'),
                                      self.settings.get('REDIS_QUEUE_PORT'),
@@ -152,10 +154,11 @@ class Engine(ABC):
                                     self.settings.get('RABBIT_HOST'),
                                     self.settings.get('RABBIT_PORT'),
                                     self.settings.get('RABBIT_VIRTUAL_HOST'))
-
-        self.max_retry = self.settings.get('MAX_RETRY')
-
         self._connection, self._channel = self._scheduler.connect()
+        if self.settings.get('DOWNLOAD') == CurlDownload:
+            self._download = CurlDownload(http2=self.http2, impersonate=self.tls)
+        else:
+            self._download = AiohttpDownload()
 
         if mode == 'auto':
             await self.start_spider()
