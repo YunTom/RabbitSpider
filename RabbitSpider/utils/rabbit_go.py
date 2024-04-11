@@ -5,7 +5,7 @@ import requests
 from datetime import datetime, timedelta
 from traceback import print_exc
 from signal import signal, SIGINT, SIGTERM
-
+from asyncio import WindowsSelectorEventLoopPolicy
 
 def main(spider, mode, sync, timer):
     if sys.platform == 'win32':
