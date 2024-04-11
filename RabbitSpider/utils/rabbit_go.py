@@ -8,6 +8,8 @@ from signal import signal, SIGINT, SIGTERM
 
 
 def main(spider, mode, sync, timer):
+    if sys.platform == 'win32':
+        asyncio.set_event_loop_policy(WindowsSelectorEventLoopPolicy())
     loop = asyncio.get_event_loop()
     try:
         rabbit = spider(sync)
