@@ -1,6 +1,6 @@
 基于rabbitmq 做消息队列开发的分布式异步爬虫框架，支持web监控，定时任务，运行模式 auto 先生产后消费，m 只生产，w 只消费
 
-安装pip install RabbitSpider
+安装pip install RabbitSpider==1.3.0
 
     from jsonpath import jsonpath
     from RabbitSpider.core.engine import Engine
