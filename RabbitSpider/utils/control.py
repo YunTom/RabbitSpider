@@ -29,12 +29,12 @@ class SettingManager(object):
 
 class TaskManager(object):
     def __init__(self, sync: int):
-        self.current_task: Final[list] = list()
+        self.current_task: Final[set] = set()
         self.semaphore = Semaphore(sync)
 
     def create_task(self, coroutine) -> Task:
         task = asyncio.create_task(coroutine)
-        self.current_task.append(task)
+        self.current_task.add(task)
 
         def done_callback(_fut: Future):
             self.current_task.remove(task)
