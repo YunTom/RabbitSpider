@@ -1,16 +1,17 @@
 基于rabbitmq 做消息队列开发的分布式异步爬虫框架，支持web监控，定时任务，运行模式 auto 先生产后消费，m 只生产，w 只消费
 
-安装pip install RabbitSpider==1.3.0
+安装pip install RabbitSpider==1.5
 
     from jsonpath import jsonpath
     from RabbitSpider.core.engine import Engine
     from RabbitSpider.http.request import Request
     from RabbitSpider.http.response import Response
     from RabbitSpider.utils.rabbit_go import go
+    from RabbitSpider.core.download import AiohttpDownload, CurlDownload
 
 
     class Test(Engine):
-    
+
         def __init__(self, sync):
             super().__init__(sync)
             # pip 安装需要添加rabbitmq redis 配置
@@ -23,6 +24,8 @@
             self.settings.set('REDIS_QUEUE_HOST', '127.0.0.1')
             self.settings.set('REDIS_QUEUE_PORT', 6379)
             self.settings.set('REDIS_QUEUE_DB', 1)
+            self.settings.set('LOG_LEVEL', 'ERROR')
+            self.settings.set('DOWNLOAD', CurlDownload)
     
         async def start_requests(self):
             for i in range(50):
@@ -41,8 +44,7 @@
         async def save_item(self, item: dict):
             """入库逻辑"""
             print(item)
-    
-    
+
     if __name__ == '__main__':
         go(Test, 'auto', 10)
 
