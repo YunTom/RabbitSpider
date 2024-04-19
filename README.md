@@ -7,10 +7,11 @@
     from RabbitSpider.http.request import Request
     from RabbitSpider.http.response import Response
     from RabbitSpider.utils.rabbit_go import go
+    from RabbitSpider.core.download import AiohttpDownload, CurlDownload
 
 
     class Test(Engine):
-    
+
         def __init__(self, sync):
             super().__init__(sync)
             # pip 安装需要添加rabbitmq redis 配置
@@ -23,6 +24,8 @@
             self.settings.set('REDIS_QUEUE_HOST', '127.0.0.1')
             self.settings.set('REDIS_QUEUE_PORT', 6379)
             self.settings.set('REDIS_QUEUE_DB', 1)
+            self.settings.set('LOG_LEVEL', 'ERROR')
+            self.settings.set('DOWNLOAD', CurlDownload)
     
         async def start_requests(self):
             for i in range(50):
@@ -41,8 +44,7 @@
         async def save_item(self, item: dict):
             """入库逻辑"""
             print(item)
-    
-    
+
     if __name__ == '__main__':
         go(Test, 'auto', 10)
 
