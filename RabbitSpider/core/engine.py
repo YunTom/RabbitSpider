@@ -2,23 +2,23 @@ import asyncio
 import os
 import pickle
 import sys
-from abc import ABC, abstractmethod
 from collections.abc import AsyncGenerator, Coroutine
 from traceback import print_exc
 from typing import Optional
 from aio_pika.abc import AbstractIncomingMessage
 from loguru import logger
 from RabbitSpider.http.request import Request
+from RabbitSpider.http.response import Response
 from RabbitSpider.utils.control import TaskManager
 from RabbitSpider.utils.control import SettingManager
 from RabbitSpider.utils.dupefilter import RFPDupeFilter
 from RabbitSpider.utils.expections import RabbitExpect
 from RabbitSpider.core.scheduler import Scheduler
-from RabbitSpider.core.download import CurlDownload, AiohttpDownload
+from RabbitSpider.core.download import CurlDownload
 from aio_pika.exceptions import QueueEmpty, ChannelClosed
 
 
-class Engine(ABC):
+class Engine(object):
     queue = os.path.basename(sys.argv[0])
     allow_status_code: list = [200]
     max_retry: int = 5
@@ -34,28 +34,34 @@ class Engine(ABC):
         self._task_manager = None
         self._sync = sync
         self.logger = None
+        self.session = None
         self.settings = SettingManager()
         self._task_manager = TaskManager(self._sync)
+        self._download = CurlDownload(http2=self.http2, impersonate=self.tls)
 
     async def start_spider(self):
         await self._scheduler.create_queue(self._channel, self.queue)
         start_request = self.start_requests()
         await self.routing(start_request)
 
-    @abstractmethod
+    async def open_spider(self):
+        """初始化数据库"""
+        self.logger.info(f'{self.queue}任务开始！')
+
     async def start_requests(self):
         """初始请求"""
         pass
 
-    @abstractmethod
-    async def parse(self, request, response):
+    async def parse(self, request: Request, response: Response):
         """默认回调"""
         pass
 
-    @abstractmethod
     async def save_item(self, item: dict):
         """入库逻辑"""
         pass
+
+    async def close_spider(self):
+        self.logger.info(f'{self.queue}任务结束！')
 
     def before_request(self, ret):
         """请求前"""
@@ -82,14 +88,14 @@ class Engine(ABC):
             raise RabbitExpect('回调函数返回类型错误！')
 
     async def crawl(self):
-        session = await self._download.new_session()
+        self.session = await self._download.new_session()
         while True:
             try:
                 incoming_message: Optional[AbstractIncomingMessage] = await self._scheduler.consumer(self._channel,
                                                                                                      queue=self.queue)
             except QueueEmpty:
                 if self._task_manager.all_done():
-                    await self._download.exit(session)
+                    await self._download.exit(self.session)
                     await self._scheduler.delete_queue(self._channel, self.queue)
                     await self._channel.close()
                     await self._connection.close()
@@ -102,27 +108,26 @@ class Engine(ABC):
                 continue
             if incoming_message:
                 await self._task_manager.semaphore.acquire()
-                self._task_manager.create_task(self.deal_resp(incoming_message, session))
+                self._task_manager.create_task(self.deal_resp(incoming_message))
             else:
                 print(incoming_message)
 
     async def consume(self):
-        session = await self._download.new_session()
+        self.session = await self._download.new_session()
         while True:
             try:
                 await self._scheduler.consumer(self._channel, queue=self.queue, callback=self.deal_resp,
-                                               prefetch=self._sync,
-                                               args=session)
+                                               prefetch=self._sync)
                 break
             except ChannelClosed:
                 self._connection, self._channel = self._scheduler.connect()
                 self.logger.warning('mq重新连接!')
 
-    async def deal_resp(self, incoming_message: AbstractIncomingMessage, session):
+    async def deal_resp(self, incoming_message: AbstractIncomingMessage):
         ret = self.before_request(pickle.loads(incoming_message.body))
         try:
             self.logger.info(f'消费数据：{ret}')
-            response = await self._download.fetch(session, ret)
+            response = await self._download.fetch(self.session, ret)
         except Exception:
             print_exc()
             response = None
@@ -162,11 +167,7 @@ class Engine(ABC):
                                     self.settings.get('RABBIT_PORT'),
                                     self.settings.get('RABBIT_VIRTUAL_HOST'))
         self._connection, self._channel = self._scheduler.connect()
-        if self.settings.get('DOWNLOAD') == CurlDownload:
-            self._download = CurlDownload(http2=self.http2, impersonate=self.tls)
-        else:
-            self._download = AiohttpDownload()
-
+        await self.open_spider()
         if mode == 'auto':
             await self.start_spider()
             await self.crawl()
@@ -176,3 +177,4 @@ class Engine(ABC):
             await self.consume()
         else:
             raise RabbitExpect('执行模式错误！')
+        await self.close_spider()

@@ -1,6 +1,3 @@
-# DOWNLOAD
-from RabbitSpider.core.download import AiohttpDownload, CurlDownload
-
 # Rabbitmq
 RABBIT_HOST = '121.36.225.245'
 RABBIT_PORT = 5672
@@ -16,6 +13,3 @@ REDIS_QUEUE_DB = 1
 
 # 日志等级
 LOG_LEVEL = 'ERROR'
-
-# 下载器
-DOWNLOAD = CurlDownload

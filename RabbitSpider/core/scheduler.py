@@ -41,14 +41,14 @@ class Scheduler(object):
                                                    routing_key=queue)
 
     @staticmethod
-    async def consumer(channel_pool, queue: str, callback: Optional[Callable] = None, prefetch: int = 1, args=None):
+    async def consumer(channel_pool, queue: str, callback: Optional[Callable] = None, prefetch: int = 1):
         async with channel_pool.acquire() as channel:
 
             queue = await channel.declare_queue(name=queue, durable=True, passive=True,
                                                 arguments={"x-max-priority": 10})
             if callback:
                 await channel.set_qos(prefetch_count=prefetch)
-                await queue.consume(callback=lambda message: callback(message, args))
+                await queue.consume(callback=callback)
                 await asyncio.Future()
             else:
                 return await queue.get()

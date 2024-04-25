@@ -11,7 +11,7 @@ class Response:
         self.status = self.status_code = status_code
         self.charset = charset
         self.res = res
-        self.cookies = {k: v.value for k, v in self.res.cookies.items()}
+        self.cookies = {k: v for k, v in self.res.cookies.items()}
         self.__r = parsel.Selector(self.text)
 
     def __str__(self):
