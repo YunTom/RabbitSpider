@@ -3,12 +3,9 @@ from RabbitSpider.http.response import Response
 
 
 class CurlDownload(object):
-    def __init__(self, http2, impersonate):
+    def __init__(self, http_version, impersonate):
         self.impersonate = impersonate
-        if http2:
-            self.http_version = 2
-        else:
-            self.http_version = None
+        self.http_version=http_version
 
     @staticmethod
     async def new_session():

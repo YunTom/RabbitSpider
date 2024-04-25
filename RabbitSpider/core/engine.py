@@ -22,7 +22,7 @@ class Engine(object):
     queue = os.path.basename(sys.argv[0])
     allow_status_code: list = [200]
     max_retry: int = 5
-    http2 = False
+    http_version = 1
     tls = "chrome120"
 
     def __init__(self, sync):
@@ -37,7 +37,7 @@ class Engine(object):
         self.session = None
         self.settings = SettingManager()
         self._task_manager = TaskManager(self._sync)
-        self._download = CurlDownload(http2=self.http2, impersonate=self.tls)
+        self._download = CurlDownload(http_version=self.http_version, impersonate=self.tls)
 
     async def start_spider(self):
         await self._scheduler.create_queue(self._channel, self.queue)
