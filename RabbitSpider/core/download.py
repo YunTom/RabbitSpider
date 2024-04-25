@@ -34,7 +34,7 @@ class CurlDownload(object):
             res = await session.post(request['url'],
                                      data=request.get('data', None), json=request.get('json', None),
                                      cookies=request.get('cookies', None), headers=request.get('headers', None),
-                                     proxy=request.get('proxies', None),
+                                     proxy=request.get('proxy', None),
                                      http_version=self.http_version,
                                      impersonate=self.impersonate,
                                      allow_redirects=request.get('allow_redirects', True),

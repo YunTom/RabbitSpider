@@ -23,7 +23,7 @@ class Engine(object):
     allow_status_code: list = [200]
     max_retry: int = 5
     http2 = False
-    tls = 'chrome120'
+    tls = "chrome120"
 
     def __init__(self, sync):
         self._filter = None
