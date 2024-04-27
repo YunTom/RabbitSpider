@@ -128,7 +128,8 @@ class Engine(object):
         try:
             self.logger.info(f'消费数据：{ret}')
             response = await self._download.fetch(self.session, ret)
-        except Exception:
+        except Exception as e:
+            self.logger.error(f'请求失败：{e}')
             print_exc()
             response = None
         if response and response.status in self.allow_status_code:
@@ -137,7 +138,8 @@ class Engine(object):
                 result = callback(Request(**ret), response)
                 if result:
                     await self.routing(result)
-            except Exception:
+            except Exception as e:
+                self.logger.error(f'请求失败：{e}')
                 print_exc()
                 for task in asyncio.all_tasks():
                     task.cancel()
