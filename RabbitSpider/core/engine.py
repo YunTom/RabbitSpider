@@ -56,7 +56,7 @@ class Engine(object):
         """默认回调"""
         pass
 
-    async def save_item(self, item: dict):
+    async def process_item(self, item: dict):
         """入库逻辑"""
         pass
 
@@ -81,7 +81,7 @@ class Engine(object):
                         await self._scheduler.producer(self._channel, queue=self.queue, body=ret)
 
                 elif isinstance(req, dict):
-                    await self.save_item(req)
+                    await self.process_item(req)
         elif isinstance(result, Coroutine):
             await result
         else:
