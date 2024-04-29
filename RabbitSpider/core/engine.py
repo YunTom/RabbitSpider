@@ -19,7 +19,7 @@ from aio_pika.exceptions import QueueEmpty, ChannelClosed
 
 
 class Engine(object):
-    queue = os.path.basename(sys.argv[0])
+    name = os.path.basename(sys.argv[0])
     allow_status_code: list = [200]
     max_retry: int = 5
     http_version = 1
@@ -40,13 +40,13 @@ class Engine(object):
         self._download = CurlDownload(http_version=self.http_version, impersonate=self.tls)
 
     async def start_spider(self):
-        await self._scheduler.create_queue(self._channel, self.queue)
+        await self._scheduler.create_queue(self._channel, self.name)
         start_request = self.start_requests()
         await self.routing(start_request)
 
     async def open_spider(self):
         """初始化数据库"""
-        self.logger.info(f'{self.queue}任务开始！')
+        self.logger.info(f'{self.name}任务开始！')
 
     async def start_requests(self):
         """初始请求"""
@@ -61,7 +61,7 @@ class Engine(object):
         pass
 
     async def close_spider(self):
-        self.logger.info(f'{self.queue}任务结束！')
+        self.logger.info(f'{self.name}任务结束！')
 
     def before_request(self, ret):
         """请求前"""
@@ -75,10 +75,10 @@ class Engine(object):
                     if req.dupe_filter:
                         if self._filter.request_seen(ret):
                             self.logger.info(f'生产数据：{req.model_dump()}')
-                            await self._scheduler.producer(self._channel, queue=self.queue, body=ret)
+                            await self._scheduler.producer(self._channel, queue=self.name, body=ret)
                     else:
                         self.logger.info(f'生产数据：{req.model_dump()}')
-                        await self._scheduler.producer(self._channel, queue=self.queue, body=ret)
+                        await self._scheduler.producer(self._channel, queue=self.name, body=ret)
 
                 elif isinstance(req, dict):
                     await self.process_item(req)
@@ -92,11 +92,11 @@ class Engine(object):
         while True:
             try:
                 incoming_message: Optional[AbstractIncomingMessage] = await self._scheduler.consumer(self._channel,
-                                                                                                     queue=self.queue)
+                                                                                                     queue=self.name)
             except QueueEmpty:
                 if self._task_manager.all_done():
                     await self._download.exit(self.session)
-                    await self._scheduler.delete_queue(self._channel, self.queue)
+                    await self._scheduler.delete_queue(self._channel, self.name)
                     await self._channel.close()
                     await self._connection.close()
                     break
@@ -116,7 +116,7 @@ class Engine(object):
         self.session = await self._download.new_session()
         while True:
             try:
-                await self._scheduler.consumer(self._channel, queue=self.queue, callback=self.deal_resp,
+                await self._scheduler.consumer(self._channel, queue=self.name, callback=self.deal_resp,
                                                prefetch=self._sync)
                 break
             except ChannelClosed:
@@ -146,7 +146,7 @@ class Engine(object):
         else:
             if ret['retry'] < self.max_retry:
                 ret['retry'] += 1
-                await self._scheduler.producer(self._channel, queue=self.queue, body=pickle.dumps(ret),
+                await self._scheduler.producer(self._channel, queue=self.name, body=pickle.dumps(ret),
                                                priority=ret['retry'])
             else:
                 self.logger.error(f'请求失败：{ret}')
@@ -156,7 +156,7 @@ class Engine(object):
         logger.add("../rabbit_log/rabbit_{time:YYYY-MM-DD}.log", level=self.settings.get('LOG_LEVEL'), rotation="1 day",
                    retention="1 week",
                    format="{time:YYYY-MM-DD HH:mm:ss} | {level} | {extra[scope]} | {name}:{line} - {message}")
-        self.logger = logger.bind(scope=self.queue)
+        self.logger = logger.bind(scope=self.name)
 
         self._filter = RFPDupeFilter(self.settings.get('REDIS_FILTER_NAME'),
                                      self.settings.get('REDIS_QUEUE_HOST'),

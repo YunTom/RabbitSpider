@@ -15,7 +15,7 @@ class Scheduler(object):
 
     def connect(self):
         connection_pool = Pool(self.get_connection, max_size=1)
-        channel_pool = Pool(self.get_channel, connection_pool, max_size=3)
+        channel_pool = Pool(self.get_channel, connection_pool, max_size=2)
         return connection_pool, channel_pool
 
     async def get_connection(self):
