@@ -25,7 +25,6 @@
             self.settings.set('REDIS_QUEUE_PORT', 6379)
             self.settings.set('REDIS_QUEUE_DB', 1)
             self.settings.set('LOG_LEVEL', 'ERROR')
-            self.settings.set('DOWNLOAD', CurlDownload)
     
         async def start_requests(self):
             for i in range(50):
