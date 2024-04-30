@@ -152,7 +152,7 @@ class Engine(object):
                 self.logger.error(f'请求失败：{ret}')
         await incoming_message.ack()
 
-    async def run(self, mode):
+    async def load_setting(self):
         logger.add("../rabbit_log/rabbit_{time:YYYY-MM-DD}.log", level=self.settings.get('LOG_LEVEL'), rotation="1 day",
                    retention="1 week",
                    format="{time:YYYY-MM-DD HH:mm:ss} | {level} | {extra[scope]} | {name}:{line} - {message}")
@@ -169,6 +169,9 @@ class Engine(object):
                                     self.settings.get('RABBIT_PORT'),
                                     self.settings.get('RABBIT_VIRTUAL_HOST'))
         self._connection, self._channel = self._scheduler.connect()
+
+    async def run(self, mode):
+        await self.load_setting()
         await self.open_spider()
         if mode == 'auto':
             await self.start_spider()
