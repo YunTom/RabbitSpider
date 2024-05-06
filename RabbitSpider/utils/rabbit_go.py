@@ -20,21 +20,21 @@ def main(spider, mode, sync, timer):
 
     def signal_handler(sig, frame):
         requests.post('http://127.0.0.1:8000/post/task',
-                      json={'name': rabbit.queue, 'status': 0,
+                      json={'name': rabbit.name, 'status': 0,
                             'stop_time': datetime.now().strftime('%Y-%m-%d %H:%M:%S')})
 
     signal(SIGINT, signal_handler)
     signal(SIGTERM, signal_handler)
     try:
         requests.post('http://127.0.0.1:8000/post/task',
-                      json={'name': rabbit.queue, 'ip_address': '127.0.0.1', 'sync': sync, 'status': 1})
+                      json={'name': rabbit.name, 'ip_address': '127.0.0.1', 'sync': sync, 'status': 1})
         loop.run_until_complete(rabbit.run(mode))
         if timer:
             requests.post('http://127.0.0.1:8000/post/task',
-                          json={'name': rabbit.queue,
+                          json={'name': rabbit.name,
                                 'next_time': (datetime.now() + timedelta(minutes=timer)).strftime('%Y-%m-%d %H:%M:%S')})
         else:
-            requests.post('http://127.0.0.1:8000/delete/queue', json={'name': rabbit.queue})
+            requests.post('http://127.0.0.1:8000/delete/queue', json={'name': rabbit.name})
     except Exception:
         print_exc()
 
