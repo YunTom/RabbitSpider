@@ -158,7 +158,7 @@ class Engine(object):
                    format="{time:YYYY-MM-DD HH:mm:ss} | {level} | {extra[scope]} | {name}:{line} - {message}")
         self.logger = logger.bind(scope=self.name)
 
-        self._filter = RFPDupeFilter(self.settings.get('REDIS_FILTER_NAME'),
+        self._filter = RFPDupeFilter(self.name,
                                      self.settings.get('REDIS_QUEUE_HOST'),
                                      self.settings.get('REDIS_QUEUE_PORT'),
                                      self.settings.get('REDIS_QUEUE_DB'))

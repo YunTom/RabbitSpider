@@ -20,7 +20,6 @@
             self.settings.set('RABBIT_USERNAME', 'yuntom')
             self.settings.set('RABBIT_PASSWORD', '123456')
             self.settings.set('RABBIT_VIRTUAL_HOST', '/')
-            self.settings.set('REDIS_FILTER_NAME', 'filter_queue')
             self.settings.set('REDIS_QUEUE_HOST', '127.0.0.1')
             self.settings.set('REDIS_QUEUE_PORT', 6379)
             self.settings.set('REDIS_QUEUE_DB', 1)
@@ -40,7 +39,7 @@
             item = {'title': response.xpath('//p[@class="title"]/text()').get()}
             yield item
     
-        async def save_item(self, item: dict):
+        async def process_item(self, item: dict):
             """入库逻辑"""
             print(item)
 
