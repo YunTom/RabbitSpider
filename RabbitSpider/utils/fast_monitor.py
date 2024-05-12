@@ -19,12 +19,11 @@ scheduler = Scheduler(settings.get('RABBIT_USERNAME'),
                       settings.get('RABBIT_HOST'),
                       settings.get('RABBIT_PORT'),
                       settings.get('RABBIT_VIRTUAL_HOST'))
-connection, channel = scheduler.connect()
+
 engine = create_engine('mysql+pymysql://root:123456@127.0.0.1:3306/monitor')
 table = Table('monitor_table', MetaData(), autoload_with=engine)
 
 Session = sessionmaker(bind=engine)
-
 session = Session()
 
 
@@ -34,6 +33,7 @@ class TaskData(BaseModel):
     sync: Optional[int] = None
     total: Optional[int] = None
     status: Optional[int] = None
+    sleep: Optional[int] = None
     stop_time: Optional[datetime] = None
     next_time: Optional[datetime] = None
 
@@ -54,16 +54,15 @@ app.add_middleware(
 @app.get('/get/task')
 async def get_task():
     resp = []
+    connection, channel = await scheduler.connect()
     stmt = select(table).where(table.columns.next_time.is_(None))
     results = session.execute(stmt)
     session.commit()
     for result in results:
         item = TaskData.model_validate(result).model_dump()
-        res = requests.get(
-            f'http://{settings.get("RABBIT_HOST")}:15672/api/queues?page=1&page_size=100&name={item["name"]}&use_regex=false&pagination=true',
-            auth=HTTPBasicAuth(username=settings.get("RABBIT_USERNAME"), password=settings.get("RABBIT_PASSWORD")))
-        item['total'] = res.json()['items'][0]['messages']
+        item['total'] = await scheduler.get_message_count(channel, item['name'])
         resp.append(item)
+    connection.close(), channel.close()
     return resp
 
 
@@ -84,7 +83,7 @@ async def start_task(item: TaskData):
     if result:
         stmt = update(table).where(table.columns.name == item.name).values(
             {key: value for key, value in item.model_dump().items() if
-             value is not None or key == 'stop_time' or key == 'next_time'})
+             value is not None or key == 'stop_time' or key == 'next_time' or key == 'sleep'})
         session.execute(stmt)
         session.commit()
     else:
@@ -95,10 +94,12 @@ async def start_task(item: TaskData):
 
 @app.post('/delete/queue')
 async def delete_queue(item: TaskData):
+    connection, channel = await scheduler.connect()
     await scheduler.delete_queue(channel, item.name)
     stmt = delete(table).where(table.columns.name == item.name)
     session.execute(stmt)
     session.commit()
+    connection.close(), channel.close()
 
 
 if __name__ == "__main__":

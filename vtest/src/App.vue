@@ -6,7 +6,7 @@
         <el-table-column prop="ip_address" label="服务器地址" width="180"/>
         <el-table-column prop="sync" label="并发数" width="150"/>
         <el-table-column prop="total" label="任务数量" width="150"/>
-        <el-table-column prop="status" label="任务状态" width="180"
+        <el-table-column prop="status" label="任务状态" width="150"
                          :filters="[{ text: '运行中', value: '运行中' },{ text: '停止', value: '停止' },]"
                          :filter-method="filterTag">
           <template #default="scope">
@@ -16,7 +16,7 @@
 
         <el-table-column prop="stop_time" label="停止时间" width="200"/>
 
-        <el-table-column width="100" label="操作">
+        <el-table-column width="150" label="操作">
           <template #default="scope">
             <el-button type="danger" :icon="Delete" circle @click="del_msg(scope)"/>
           </template>
@@ -25,8 +25,9 @@
     </div>
     <div class="table2" style="width: 30%">
       <el-table :data="nextData" style="width: 100%" stripe="true" height="1000">
-        <el-table-column prop="name" label="任务名称" width="250"/>
-        <el-table-column prop="next_time" label="下次运行时间" width="250"/>
+        <el-table-column prop="name" label="任务名称" width="150"/>
+        <el-table-column prop="sleep" label="睡眠时间/分钟" width="150"/>
+        <el-table-column prop="next_time" label="下次运行时间" width="180"/>
       </el-table>
     </div>
   </div>

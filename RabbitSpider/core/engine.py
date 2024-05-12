@@ -35,6 +35,7 @@ class Engine(object):
         self._sync = sync
         self.logger = None
         self.session = None
+        self._future = None
         self.settings = SettingManager()
         self._task_manager = TaskManager(self._sync)
         self._download = CurlDownload(http_version=self.http_version, impersonate=self.tls)
@@ -102,10 +103,8 @@ class Engine(object):
                     break
                 else:
                     continue
-            except ChannelClosed:
-                self._connection, self._channel = self._scheduler.connect()
-                self.logger.warning('mq重新连接!')
-                continue
+            except Exception:
+                break
             if incoming_message:
                 await self._task_manager.semaphore.acquire()
                 self._task_manager.create_task(self.deal_resp(incoming_message))
@@ -114,19 +113,15 @@ class Engine(object):
 
     async def consume(self):
         self.session = await self._download.new_session()
-        while True:
-            try:
-                await self._scheduler.consumer(self._channel, queue=self.name, callback=self.deal_resp,
-                                               prefetch=self._sync)
-                break
-            except ChannelClosed:
-                self._connection, self._channel = self._scheduler.connect()
-                self.logger.warning('mq重新连接!')
+        await self._scheduler.consumer(self._channel, queue=self.name, callback=self.deal_resp,
+                                       prefetch=self._sync)
+        self._future = asyncio.Future()
+        await self._future
 
-    async def deal_resp(self, incoming_message: AbstractIncomingMessage):
+    async def deal_resp(self, incoming_message):
         ret = self.before_request(pickle.loads(incoming_message.body))
+        self.logger.info(f'消费数据：{ret}')
         try:
-            self.logger.info(f'消费数据：{ret}')
             response = await self._download.fetch(self.session, ret)
         except Exception as e:
             self.logger.error(f'请求失败：{e}')
@@ -150,7 +145,12 @@ class Engine(object):
                                                priority=ret['retry'])
             else:
                 self.logger.error(f'请求失败：{ret}')
-        await incoming_message.ack()
+        try:
+            await self._channel.declare_queue(name=self.name, passive=True)
+            await incoming_message.ack()
+        except Exception:
+            self._future.set_result('done') if self._future else None
+            self.logger.info(f'队列{self.name}已删除！')
 
     async def load_setting(self):
         logger.add("../rabbit_log/rabbit_{time:YYYY-MM-DD}.log", level=self.settings.get('LOG_LEVEL'), rotation="1 day",
@@ -168,7 +168,7 @@ class Engine(object):
                                     self.settings.get('RABBIT_HOST'),
                                     self.settings.get('RABBIT_PORT'),
                                     self.settings.get('RABBIT_VIRTUAL_HOST'))
-        self._connection, self._channel = self._scheduler.connect()
+        self._connection, self._channel = await self._scheduler.connect()
 
     async def run(self, mode):
         await self.load_setting()
