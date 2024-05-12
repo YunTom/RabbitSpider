@@ -1,4 +1,3 @@
-import requests
 import uvicorn
 from starlette.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -7,7 +6,6 @@ from typing import Optional
 from datetime import datetime
 from RabbitSpider.core.scheduler import Scheduler
 from RabbitSpider.utils.control import SettingManager
-from requests.auth import HTTPBasicAuth
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy.orm.session import sessionmaker
 from sqlalchemy import create_engine, Table, MetaData, select, update, insert, delete
