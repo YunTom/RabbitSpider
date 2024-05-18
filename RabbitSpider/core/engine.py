@@ -15,7 +15,7 @@ from RabbitSpider.utils.dupefilter import RFPDupeFilter
 from RabbitSpider.utils.expections import RabbitExpect
 from RabbitSpider.core.scheduler import Scheduler
 from RabbitSpider.core.download import CurlDownload
-from aio_pika.exceptions import QueueEmpty, ChannelClosed
+from aio_pika.exceptions import QueueEmpty
 
 
 class Engine(object):
@@ -42,8 +42,8 @@ class Engine(object):
 
     async def start_spider(self):
         await self._scheduler.create_queue(self._channel, self.name)
-        start_request = self.start_requests()
-        await self.routing(start_request)
+        self.session = await self._download.new_session()
+        await self.routing(self.start_requests())
 
     async def open_spider(self):
         """初始化数据库"""
@@ -89,7 +89,6 @@ class Engine(object):
             raise RabbitExpect('回调函数返回类型错误！')
 
     async def crawl(self):
-        self.session = await self._download.new_session()
         while True:
             try:
                 incoming_message: Optional[AbstractIncomingMessage] = await self._scheduler.consumer(self._channel,
@@ -112,7 +111,6 @@ class Engine(object):
                 print(incoming_message)
 
     async def consume(self):
-        self.session = await self._download.new_session()
         await self._scheduler.consumer(self._channel, queue=self.name, callback=self.deal_resp,
                                        prefetch=self._sync)
         self._future = asyncio.Future()

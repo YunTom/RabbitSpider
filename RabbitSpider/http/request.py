@@ -17,7 +17,7 @@ class Request(BaseModel):
     proxy: Optional[str] = None
     allow_redirects: Optional[bool] = True
     callback: Callable | str = 'parse'
-    retry: Optional[int] = 1
+    retry: Optional[int] = 0
     dupe_filter: Optional[bool] = False
     meta: Optional[dict] = {}
 
