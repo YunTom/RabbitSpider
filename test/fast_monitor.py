@@ -97,7 +97,8 @@ async def delete_queue(item: TaskData):
     stmt = delete(table).where(table.columns.name == item.name)
     session.execute(stmt)
     session.commit()
-    connection.close(), channel.close()
+    await connection.close()
+    await channel.close()
 
 
 if __name__ == "__main__":

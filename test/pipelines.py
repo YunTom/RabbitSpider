@@ -8,7 +8,7 @@ class TestPipeline(Pipeline):
 
     async def process_item(self, item, spider):
         """入库逻辑"""
-        pass
+        print(item)
 
     async def close_spider(self, spider):
         pass

@@ -85,7 +85,7 @@ class Engine(object):
                         await self._scheduler.producer(self._channel, queue=self.name, body=ret)
 
                 elif isinstance(req, dict):
-                    await self.Pipeline.process_item(req, self)
+                    await getattr(self, 'Pipeline').process_item(req, self)
         elif isinstance(result, Coroutine):
             await result
         else:
@@ -154,9 +154,9 @@ class Engine(object):
             self.logger.info(f'队列{self.name}已删除！')
 
     async def run(self, mode):
-        await self.Pipeline.open_spider(self)
         if mode == 'auto':
             await self.start_spider()
+            await getattr(self, 'Pipeline').open_spider(self)
             await self.crawl()
         elif mode == 'm':
             await self.start_spider()
@@ -164,4 +164,4 @@ class Engine(object):
             await self.consume()
         else:
             raise RabbitExpect('执行模式错误！')
-        await self.Pipeline.close_spider(self)
+        await getattr(self, 'Pipeline').close_spider(self)
