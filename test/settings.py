@@ -12,3 +12,6 @@ REDIS_QUEUE_DB = 1
 
 # 日志等级
 LOG_LEVEL = 'ERROR'
+
+# 管道
+ITEM_PIPELINES = 'pipelines.TestPipeline'

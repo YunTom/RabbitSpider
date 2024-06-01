@@ -5,16 +5,18 @@ import sys
 from collections.abc import AsyncGenerator, Coroutine
 from traceback import print_exc
 from typing import Optional
+from importlib import import_module
 from aio_pika.abc import AbstractIncomingMessage
-from loguru import logger
 from RabbitSpider.http.request import Request
 from RabbitSpider.http.response import Response
 from RabbitSpider.utils.control import TaskManager
 from RabbitSpider.utils.control import SettingManager
 from RabbitSpider.utils.dupefilter import RFPDupeFilter
 from RabbitSpider.utils.expections import RabbitExpect
+from RabbitSpider.utils.logger import Logger
 from RabbitSpider.core.scheduler import Scheduler
 from RabbitSpider.core.download import CurlDownload
+from curl_cffi import CurlHttpVersion
 from aio_pika.exceptions import QueueEmpty
 
 
@@ -22,32 +24,40 @@ class Engine(object):
     name = os.path.basename(sys.argv[0])
     allow_status_code: list = [200]
     max_retry: int = 5
-    http_version = 1
+    http_version = CurlHttpVersion.V1_0
     tls = "chrome120"
 
     def __init__(self, sync):
-        self._filter = None
-        self._scheduler = None
-        self._connection = None
-        self._channel = None
-        self._download = None
-        self._task_manager = None
-        self._sync = sync
-        self.logger = None
         self.session = None
         self._future = None
+        self._connection = None
+        self._channel = None
+        self._sync = sync
         self.settings = SettingManager()
+        self._filter = RFPDupeFilter(self.name,
+                                     self.settings.get('REDIS_QUEUE_HOST'),
+                                     self.settings.get('REDIS_QUEUE_PORT'),
+                                     self.settings.get('REDIS_QUEUE_DB'))
+        self._scheduler = Scheduler(self.settings.get('RABBIT_USERNAME'),
+                                    self.settings.get('RABBIT_PASSWORD'),
+                                    self.settings.get('RABBIT_HOST'),
+                                    self.settings.get('RABBIT_PORT'),
+                                    self.settings.get('RABBIT_VIRTUAL_HOST'))
+        self.logger = Logger(self.settings, self.name).logger
         self._task_manager = TaskManager(self._sync)
         self._download = CurlDownload(http_version=self.http_version, impersonate=self.tls)
 
     async def start_spider(self):
+        pipe = self.settings.get('ITEM_PIPELINES')
+        pipe_path = pipe.split('.')
+        pipe_module = import_module(f'{pipe_path[0]}')
+        pipe_obj = getattr(pipe_module, pipe_path[1])
+        setattr(self, 'Pipeline', pipe_obj())
+
+        self._connection, self._channel = await self._scheduler.connect()
         await self._scheduler.create_queue(self._channel, self.name)
         self.session = await self._download.new_session()
         await self.routing(self.start_requests())
-
-    async def open_spider(self):
-        """初始化数据库"""
-        self.logger.info(f'{self.name}任务开始！')
 
     async def start_requests(self):
         """初始请求"""
@@ -56,13 +66,6 @@ class Engine(object):
     async def parse(self, request: Request, response: Response):
         """默认回调"""
         pass
-
-    async def process_item(self, item: dict):
-        """入库逻辑"""
-        pass
-
-    async def close_spider(self):
-        self.logger.info(f'{self.name}任务结束！')
 
     def before_request(self, ret):
         """请求前"""
@@ -82,7 +85,7 @@ class Engine(object):
                         await self._scheduler.producer(self._channel, queue=self.name, body=ret)
 
                 elif isinstance(req, dict):
-                    await self.process_item(req)
+                    await self.Pipeline.process_item(req, self)
         elif isinstance(result, Coroutine):
             await result
         else:
@@ -150,27 +153,8 @@ class Engine(object):
             self._future.set_result('done') if self._future else None
             self.logger.info(f'队列{self.name}已删除！')
 
-    async def load_setting(self):
-        logger.add("../rabbit_log/rabbit_{time:YYYY-MM-DD}.log", level=self.settings.get('LOG_LEVEL'), rotation="1 day",
-                   retention="1 week",
-                   format="{time:YYYY-MM-DD HH:mm:ss} | {level} | {extra[scope]} | {name}:{line} - {message}")
-        self.logger = logger.bind(scope=self.name)
-
-        self._filter = RFPDupeFilter(self.name,
-                                     self.settings.get('REDIS_QUEUE_HOST'),
-                                     self.settings.get('REDIS_QUEUE_PORT'),
-                                     self.settings.get('REDIS_QUEUE_DB'))
-
-        self._scheduler = Scheduler(self.settings.get('RABBIT_USERNAME'),
-                                    self.settings.get('RABBIT_PASSWORD'),
-                                    self.settings.get('RABBIT_HOST'),
-                                    self.settings.get('RABBIT_PORT'),
-                                    self.settings.get('RABBIT_VIRTUAL_HOST'))
-        self._connection, self._channel = await self._scheduler.connect()
-
     async def run(self, mode):
-        await self.load_setting()
-        await self.open_spider()
+        await self.Pipeline.open_spider(self)
         if mode == 'auto':
             await self.start_spider()
             await self.crawl()
@@ -180,4 +164,4 @@ class Engine(object):
             await self.consume()
         else:
             raise RabbitExpect('执行模式错误！')
-        await self.close_spider()
+        await self.Pipeline.close_spider(self)

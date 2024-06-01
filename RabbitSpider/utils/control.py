@@ -1,7 +1,9 @@
 import asyncio
+from importlib import import_module
 from typing import Final
 from asyncio import Task, Future, Semaphore
-from RabbitSpider import settings
+
+settings = import_module('settings')
 
 
 class SettingManager(object):
