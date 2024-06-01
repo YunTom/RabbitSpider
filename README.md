@@ -7,7 +7,7 @@
     from RabbitSpider.http.request import Request
     from RabbitSpider.http.response import Response
     from RabbitSpider.utils.rabbit_go import go
-    from RabbitSpider.core.download import AiohttpDownload, CurlDownload
+    from RabbitSpider.core.download import  CurlDownload
 
 
     class Test(Engine):
@@ -38,10 +38,7 @@
         async def parse_item(self, request: Request, response: Response):
             item = {'title': response.xpath('//p[@class="title"]/text()').get()}
             yield item
-    
-        async def process_item(self, item: dict):
-            """入库逻辑"""
-            print(item)
+
 
     if __name__ == '__main__':
         go(Test, 'auto', 10)
