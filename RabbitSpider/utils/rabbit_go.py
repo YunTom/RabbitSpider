@@ -19,25 +19,25 @@ def main(spider, mode, sync, timer):
         print_exc()
         raise
 
-    def signal_handler(sig, frame):
-        requests.post('http://127.0.0.1:8000/post/task',
-                      json={'name': rabbit.name, 'status': 0,
-                            'stop_time': datetime.now().strftime('%Y-%m-%d %H:%M:%S')})
-
-    signal(SIGINT, signal_handler)
-    signal(SIGTERM, signal_handler)
+    # def signal_handler(sig, frame):
+    #     requests.post('http://127.0.0.1:8000/post/task',
+    #                   json={'name': rabbit.name, 'status': 0,
+    #                         'stop_time': datetime.now().strftime('%Y-%m-%d %H:%M:%S')})
+    #
+    # signal(SIGINT, signal_handler)
+    # signal(SIGTERM, signal_handler)
     try:
-        requests.post('http://127.0.0.1:8000/post/task',
-                      json={'name': rabbit.name, 'ip_address': f'{socket.gethostbyname(socket.gethostname())}',
-                            'sync': sync, 'status': 1})
+        # requests.post('http://127.0.0.1:8000/post/task',
+        #               json={'name': rabbit.name, 'ip_address': f'{socket.gethostbyname(socket.gethostname())}',
+        #                     'sync': sync, 'status': 1})
         loop.run_until_complete(rabbit.run(mode))
-        if timer:
-            requests.post('http://127.0.0.1:8000/post/task',
-                          json={'name': rabbit.name,
-                                'sleep': timer,
-                                'next_time': (datetime.now() + timedelta(minutes=timer)).strftime('%Y-%m-%d %H:%M:%S')})
-        elif mode == 'auto':
-            requests.post('http://127.0.0.1:8000/delete/queue', json={'name': rabbit.name})
+        # if timer:
+        #     requests.post('http://127.0.0.1:8000/post/task',
+        #                   json={'name': rabbit.name,
+        #                         'sleep': timer,
+        #                         'next_time': (datetime.now() + timedelta(minutes=timer)).strftime('%Y-%m-%d %H:%M:%S')})
+        # elif mode == 'auto':
+        #     requests.post('http://127.0.0.1:8000/delete/queue', json={'name': rabbit.name})
     except Exception:
         print_exc()
 

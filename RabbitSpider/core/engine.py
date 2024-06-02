@@ -5,15 +5,15 @@ import sys
 from collections.abc import AsyncGenerator, Coroutine
 from traceback import print_exc
 from typing import Optional
-from importlib import import_module
 from aio_pika.abc import AbstractIncomingMessage
 from RabbitSpider.http.request import Request
 from RabbitSpider.http.response import Response
 from RabbitSpider.utils.control import TaskManager
 from RabbitSpider.utils.control import SettingManager
+from RabbitSpider.utils.control import PipelineManager
 from RabbitSpider.utils.dupefilter import RFPDupeFilter
 from RabbitSpider.utils.expections import RabbitExpect
-from RabbitSpider.utils.logger import Logger
+from RabbitSpider.utils.log import Logger
 from RabbitSpider.core.scheduler import Scheduler
 from RabbitSpider.core.download import CurlDownload
 from curl_cffi import CurlHttpVersion
@@ -46,15 +46,11 @@ class Engine(object):
         self.logger = Logger(self.settings, self.name).logger
         self._task_manager = TaskManager(self._sync)
         self._download = CurlDownload(http_version=self.http_version, impersonate=self.tls)
+        self.pipelines = PipelineManager.create_instance(self)
 
     async def start_spider(self):
-        pipe = self.settings.get('ITEM_PIPELINES')
-        pipe_path = pipe.split('.')
-        pipe_module = import_module(f'{pipe_path[0]}')
-        pipe_obj = getattr(pipe_module, pipe_path[1])
-        setattr(self, 'Pipeline', pipe_obj())
-
         self._connection, self._channel = await self._scheduler.connect()
+        await self.pipelines.methods['open_spider'](self)
         await self._scheduler.create_queue(self._channel, self.name)
         self.session = await self._download.new_session()
         await self.routing(self.start_requests())
@@ -85,7 +81,7 @@ class Engine(object):
                         await self._scheduler.producer(self._channel, queue=self.name, body=ret)
 
                 elif isinstance(req, dict):
-                    await getattr(self, 'Pipeline').process_item(req, self)
+                    await self.pipelines.methods['process_item'](self, req)
         elif isinstance(result, Coroutine):
             await result
         else:
@@ -156,7 +152,6 @@ class Engine(object):
     async def run(self, mode):
         if mode == 'auto':
             await self.start_spider()
-            await getattr(self, 'Pipeline').open_spider(self)
             await self.crawl()
         elif mode == 'm':
             await self.start_spider()
@@ -164,4 +159,4 @@ class Engine(object):
             await self.consume()
         else:
             raise RabbitExpect('执行模式错误！')
-        await getattr(self, 'Pipeline').close_spider(self)
+        await self.pipelines.methods['close_spider'](self)
