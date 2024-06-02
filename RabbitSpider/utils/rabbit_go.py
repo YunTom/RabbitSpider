@@ -42,7 +42,7 @@ def main(spider, mode, sync, timer):
         print_exc()
 
 
-def go(spider: object, mode: str = 'auto', sync: int = 1, timer: int = 0):
+def go(spider, mode: str = 'auto', sync: int = 1, timer: int = 0):
     for i in sys.argv[1:]:
         key, value = i.split('=')
         if key == 'mode':
