@@ -22,6 +22,5 @@ class Test(Engine):
         yield item
 
 
-
 if __name__ == '__main__':
     go(Test, 'auto', 5)

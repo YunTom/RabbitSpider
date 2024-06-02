@@ -72,7 +72,7 @@ class PipelineManager(object):
         self._add_pipe(pipeline)
 
     def _add_pipe(self, pipeline):
-        pipe_obj = load_class(pipeline)
+        pipe_obj = load_class(pipeline)()
         if hasattr(pipe_obj, 'open_spider'):
             self.methods['open_spider'] = getattr(pipe_obj, 'open_spider')
         if hasattr(pipe_obj, 'process_item'):

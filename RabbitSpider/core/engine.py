@@ -81,7 +81,7 @@ class Engine(object):
                         await self._scheduler.producer(self._channel, queue=self.name, body=ret)
 
                 elif isinstance(req, dict):
-                    await self.pipelines.methods['process_item'](self, req)
+                    await self.pipelines.methods['process_item'](req,self)
         elif isinstance(result, Coroutine):
             await result
         else:
