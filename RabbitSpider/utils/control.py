@@ -1,8 +1,11 @@
+import os, sys
 import asyncio
 from collections import defaultdict
 from importlib import import_module
 from typing import Final, Dict, List, Callable
 from asyncio import Task, Future, Semaphore
+
+sys.path.append(os.path.abspath(os.path.join(os.path.abspath(sys.argv[0]), '../..')))
 
 
 def load_class(_path):
