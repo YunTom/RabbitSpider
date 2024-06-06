@@ -61,10 +61,6 @@ class Engine(object):
         """默认回调"""
         pass
 
-    def before_request(self, ret):
-        """请求前"""
-        return ret
-
     async def routing(self, result):
         async def rule(res):
             if isinstance(res, Request):
@@ -119,7 +115,7 @@ class Engine(object):
         await self._future
 
     async def deal_resp(self, incoming_message):
-        ret = self.before_request(pickle.loads(incoming_message.body))
+        ret = pickle.loads(incoming_message.body)
         self.logger.info(f'消费数据：{ret}')
         response = await self.middlewares.downloader(ret)
         if response:
