@@ -18,3 +18,6 @@ MIDDLEWARES = ['middlewares.TestMiddleware']
 
 # 管道
 ITEM_PIPELINES = ['pipelines.TestPipeline']
+
+# 最大重试次数
+MAX_RETRY = 5

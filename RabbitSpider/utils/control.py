@@ -153,7 +153,7 @@ class MiddlewareManager(object):
         if isinstance(resp, Response):
             resp = await self._process_response(request, resp)
         if isinstance(resp, Request):
-            if resp.retry < self.spider.max_retry:
+            if resp.retry < self.spider.settings.get('MAX_RETRY'):
                 resp.retry += 1
                 return await self.spider.routing(resp)
             else:

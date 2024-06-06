@@ -22,7 +22,6 @@ from aio_pika.exceptions import QueueEmpty
 
 class Engine(object):
     name = os.path.basename(sys.argv[0])
-    max_retry: int = 5
     http_version = CurlHttpVersion.V1_0
     impersonate = "chrome120"
 
