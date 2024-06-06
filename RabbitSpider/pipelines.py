@@ -1,4 +1,4 @@
-class PipelineBase(object):
+class BasePipeline(object):
 
     async def open_spider(self, spider):
         """初始化数据库"""

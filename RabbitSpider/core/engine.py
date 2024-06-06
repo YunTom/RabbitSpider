@@ -11,21 +11,20 @@ from RabbitSpider.http.response import Response
 from RabbitSpider.utils.control import TaskManager
 from RabbitSpider.utils.control import SettingManager
 from RabbitSpider.utils.control import PipelineManager
+from RabbitSpider.utils.control import MiddlewareManager
 from RabbitSpider.utils.dupefilter import RFPDupeFilter
 from RabbitSpider.utils.expections import RabbitExpect
 from RabbitSpider.utils.log import Logger
 from RabbitSpider.core.scheduler import Scheduler
-from RabbitSpider.core.download import CurlDownload
 from curl_cffi import CurlHttpVersion
 from aio_pika.exceptions import QueueEmpty
 
 
 class Engine(object):
     name = os.path.basename(sys.argv[0])
-    allow_status_code: list = [200]
     max_retry: int = 5
     http_version = CurlHttpVersion.V1_0
-    tls = "chrome120"
+    impersonate = "chrome120"
 
     def __init__(self, sync):
         self.session = None
@@ -45,14 +44,14 @@ class Engine(object):
                                     self.settings.get('RABBIT_VIRTUAL_HOST'))
         self.logger = Logger(self.settings, self.name).logger
         self._task_manager = TaskManager(self._sync)
-        self._download = CurlDownload(http_version=self.http_version, impersonate=self.tls)
+        self.middlewares = MiddlewareManager.create_instance(self.http_version, self.impersonate, self)
         self.pipelines = PipelineManager.create_instance(self)
 
     async def start_spider(self):
         self._connection, self._channel = await self._scheduler.connect()
-        await self.pipelines.methods['open_spider'](self)
+        self.session = await self.middlewares.download.new_session()
+        await self.pipelines.open_spider()
         await self._scheduler.create_queue(self._channel, self.name)
-        self.session = await self._download.new_session()
         await self.routing(self.start_requests())
 
     async def start_requests(self):
@@ -68,22 +67,27 @@ class Engine(object):
         return ret
 
     async def routing(self, result):
-        if isinstance(result, AsyncGenerator):
-            async for req in result:
-                if isinstance(req, Request):
-                    ret = pickle.dumps(req.model_dump())
-                    if req.dupe_filter:
-                        if self._filter.request_seen(ret):
-                            self.logger.info(f'生产数据：{req.model_dump()}')
-                            await self._scheduler.producer(self._channel, queue=self.name, body=ret)
-                    else:
-                        self.logger.info(f'生产数据：{req.model_dump()}')
+        async def rule(res):
+            if isinstance(res, Request):
+                ret = pickle.dumps(res.model_dump())
+                if res.dupe_filter:
+                    if self._filter.request_seen(ret):
+                        self.logger.info(f'生产数据：{res.model_dump()}')
                         await self._scheduler.producer(self._channel, queue=self.name, body=ret)
+                else:
+                    self.logger.info(f'生产数据：{res.model_dump()}')
+                    await self._scheduler.producer(self._channel, queue=self.name, body=ret)
+            elif isinstance(res, dict):
+                await self.pipelines.process_item(res)
 
-                elif isinstance(req, dict):
-                    await self.pipelines.methods['process_item'](req,self)
+        if isinstance(result, AsyncGenerator):
+            async for r in result:
+                await rule(r)
         elif isinstance(result, Coroutine):
-            await result
+            r = await result
+            await rule(r)
+        elif isinstance(result, Request):
+            await rule(result)
         else:
             raise RabbitExpect('回调函数返回类型错误！')
 
@@ -94,7 +98,7 @@ class Engine(object):
                                                                                                      queue=self.name)
             except QueueEmpty:
                 if self._task_manager.all_done():
-                    await self._download.exit(self.session)
+                    await self.middlewares.download.exit(self.session)
                     await self._scheduler.delete_queue(self._channel, self.name)
                     await self._channel.close()
                     await self._connection.close()
@@ -118,35 +122,24 @@ class Engine(object):
     async def deal_resp(self, incoming_message):
         ret = self.before_request(pickle.loads(incoming_message.body))
         self.logger.info(f'消费数据：{ret}')
-        try:
-            response = await self._download.fetch(self.session, ret)
-        except Exception as e:
-            self.logger.error(f'请求失败：{e}')
-            print_exc()
-            response = None
-        if response and response.status in self.allow_status_code:
+        response = await self.middlewares.downloader(ret)
+        if response:
             try:
                 callback = getattr(self, ret['callback'])
                 result = callback(Request(**ret), response)
                 if result:
                     await self.routing(result)
             except Exception as e:
-                self.logger.error(f'请求失败：{e}')
+                self.logger.error(f'解析失败：{e}')
                 print_exc()
                 for task in asyncio.all_tasks():
                     task.cancel()
-        else:
-            if ret['retry'] < self.max_retry:
-                ret['retry'] += 1
-                await self._scheduler.producer(self._channel, queue=self.name, body=pickle.dumps(ret),
-                                               priority=ret['retry'])
-            else:
-                self.logger.error(f'请求失败：{ret}')
         try:
             await self._channel.declare_queue(name=self.name, passive=True)
             await incoming_message.ack()
         except Exception:
             self._future.set_result('done') if self._future else None
+            await self.middlewares.download.exit(self.session)
             self.logger.info(f'队列{self.name}已删除！')
 
     async def run(self, mode):
@@ -159,4 +152,4 @@ class Engine(object):
             await self.consume()
         else:
             raise RabbitExpect('执行模式错误！')
-        await self.pipelines.methods['close_spider'](self)
+        await self.pipelines.close_spider()

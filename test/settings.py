@@ -13,5 +13,8 @@ REDIS_QUEUE_DB = 1
 # 日志等级
 LOG_LEVEL = 'ERROR'
 
+# 中间件
+MIDDLEWARES = ['middlewares.TestMiddleware']
+
 # 管道
-ITEM_PIPELINES = 'pipelines.TestPipeline'
+ITEM_PIPELINES = ['pipelines.TestPipeline']
