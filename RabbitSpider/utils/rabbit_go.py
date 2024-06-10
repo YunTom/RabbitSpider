@@ -50,15 +50,3 @@ async def go(spider, mode: str = 'auto', sync: int = 1, timer: int = 0):
         await asyncio.sleep(timer * 60)
     else:
         await main(spider, mode=mode, sync=sync, timer=timer)
-
-
-class BatchProcess(object):
-    def __init__(self):
-        self.tasks = []
-
-    def add_task(self, spider, mode, sync, timer=0):
-        task = asyncio.create_task(go(spider, mode, sync, timer))
-        self.tasks.append(task)
-
-    async def start(self):
-        await asyncio.gather(*self.tasks)
