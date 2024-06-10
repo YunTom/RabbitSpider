@@ -3,6 +3,7 @@ from RabbitSpider.core.engine import Engine
 from RabbitSpider.http.request import Request
 from RabbitSpider.http.response import Response
 from RabbitSpider.utils.rabbit_go import go
+from test.items import TestItem
 
 
 class Test(Engine):
@@ -18,7 +19,8 @@ class Test(Engine):
         yield Request(url=url, dupe_filter=False, callback=self.parse_item)
 
     async def parse_item(self, request: Request, response: Response):
-        item = {'title': response.xpath('//p[@class="title"]/text()').get()}
+        item = TestItem()
+        item['title'] = response.xpath('//p[@class="title"]/text()').get()
         yield item
 
 

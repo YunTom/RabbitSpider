@@ -8,7 +8,7 @@ class TestPipeline(BasePipeline):
 
     async def process_item(self, item, spider):
         """入库逻辑"""
-        spider.logger.info(item)
+        spider.logger.info(item.to_dict())
 
     async def close_spider(self, spider):
         pass
