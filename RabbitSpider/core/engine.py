@@ -15,6 +15,7 @@ from RabbitSpider.utils.control import MiddlewareManager
 from RabbitSpider.utils.dupefilter import RFPDupeFilter
 from RabbitSpider.utils.expections import RabbitExpect
 from RabbitSpider.utils.log import Logger
+from RabbitSpider.items import Item
 from RabbitSpider.core.scheduler import Scheduler
 from curl_cffi import CurlHttpVersion
 from aio_pika.exceptions import QueueEmpty
@@ -72,7 +73,7 @@ class Engine(object):
                 else:
                     self.logger.info(f'生产数据：{res.model_dump()}')
                     await self._scheduler.producer(self._channel, queue=self.name, body=ret)
-            elif isinstance(res, dict):
+            elif isinstance(res, Item):
                 await self.pipelines.process_item(res)
 
         if isinstance(result, AsyncGenerator):

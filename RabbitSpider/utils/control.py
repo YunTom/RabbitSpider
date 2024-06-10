@@ -3,12 +3,15 @@ import asyncio
 from collections import defaultdict
 from importlib import import_module
 from typing import Final, Dict, List, Callable
-from asyncio import Task, Future, Semaphore
+from asyncio import Task, Future, Semaphore, WindowsSelectorEventLoopPolicy
 from RabbitSpider.http.request import Request
 from RabbitSpider.http.response import Response
 from RabbitSpider.core.download import CurlDownload
 
 sys.path.append(os.path.abspath(os.path.join(os.path.abspath(sys.argv[0]), '../..')))
+
+if sys.platform == 'win32':
+    asyncio.set_event_loop_policy(WindowsSelectorEventLoopPolicy())
 
 
 def load_class(_path):

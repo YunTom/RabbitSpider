@@ -6,12 +6,9 @@ import socket
 from datetime import datetime, timedelta
 from traceback import print_exc
 from signal import signal, SIGINT, SIGTERM
-from asyncio import WindowsSelectorEventLoopPolicy
 
 
 def main(spider, mode, sync, timer):
-    if sys.platform == 'win32':
-        asyncio.set_event_loop_policy(WindowsSelectorEventLoopPolicy())
     loop = asyncio.get_event_loop()
     try:
         rabbit = spider(sync)
