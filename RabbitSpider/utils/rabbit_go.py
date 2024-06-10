@@ -8,8 +8,7 @@ from traceback import print_exc
 from signal import signal, SIGINT, SIGTERM
 
 
-def main(spider, mode, sync, timer):
-    loop = asyncio.get_event_loop()
+async def main(spider, mode, sync, timer):
     try:
         rabbit = spider(sync)
     except Exception:
@@ -27,7 +26,7 @@ def main(spider, mode, sync, timer):
         # requests.post('http://127.0.0.1:8000/post/task',
         #               json={'name': rabbit.name, 'ip_address': f'{socket.gethostbyname(socket.gethostname())}',
         #                     'sync': sync, 'status': 1})
-        loop.run_until_complete(rabbit.run(mode))
+        await rabbit.run(mode)
         # if timer:
         #     requests.post('http://127.0.0.1:8000/post/task',
         #                   json={'name': rabbit.name,
@@ -39,7 +38,7 @@ def main(spider, mode, sync, timer):
         print_exc()
 
 
-def go(spider, mode: str = 'auto', sync: int = 1, timer: int = 0):
+async def go(spider, mode: str = 'auto', sync: int = 1, timer: int = 0):
     for i in sys.argv[1:]:
         key, value = i.split('=')
         if key == 'mode':
@@ -47,7 +46,19 @@ def go(spider, mode: str = 'auto', sync: int = 1, timer: int = 0):
         if key == 'sync':
             sync = value
     while timer:
-        main(spider, mode=mode, sync=sync, timer=timer)
-        time.sleep(timer * 60)
+        await main(spider, mode=mode, sync=sync, timer=timer)
+        await asyncio.sleep(timer * 60)
     else:
-        main(spider, mode=mode, sync=sync, timer=timer)
+        await main(spider, mode=mode, sync=sync, timer=timer)
+
+
+class BatchProcess(object):
+    def __init__(self):
+        self.tasks = []
+
+    def add_task(self, spider, mode, sync, timer=0):
+        task = asyncio.create_task(go(spider, mode, sync, timer))
+        self.tasks.append(task)
+
+    async def start(self):
+        await asyncio.gather(*self.tasks)

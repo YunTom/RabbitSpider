@@ -1,8 +1,9 @@
+import asyncio
 from jsonpath import jsonpath
 from RabbitSpider.core.engine import Engine
 from RabbitSpider.http.request import Request
 from RabbitSpider.http.response import Response
-from RabbitSpider.utils.rabbit_go import go
+from RabbitSpider.utils.rabbit_go import BatchProcess, go
 from test.items import TestItem
 
 
@@ -25,4 +26,4 @@ class Test(Engine):
 
 
 if __name__ == '__main__':
-    go(Test, 'auto', 1)
+    asyncio.run(go(Test, 'auto', 10, 1))
