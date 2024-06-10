@@ -3,7 +3,7 @@ from jsonpath import jsonpath
 from RabbitSpider.core.engine import Engine
 from RabbitSpider.http.request import Request
 from RabbitSpider.http.response import Response
-from RabbitSpider.utils.rabbit_go import BatchProcess, go
+from RabbitSpider.utils.rabbit_go import go
 from test.items import TestItem
 
 
