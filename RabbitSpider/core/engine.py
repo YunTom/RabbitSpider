@@ -139,6 +139,7 @@ class Engine(object):
             self.logger.info(f'队列{self.name}已删除！')
 
     async def run(self, mode):
+        self.logger.info(f'{self.name}任务开始')
         if mode == 'auto':
             await self.start_spider()
             await self.crawl()
@@ -149,3 +150,4 @@ class Engine(object):
         else:
             raise RabbitExpect('执行模式错误！')
         await self.pipelines.close_spider()
+        self.logger.info(f'{self.name}任务完成')
