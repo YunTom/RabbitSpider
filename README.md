@@ -2,6 +2,11 @@
 
 使用curl_cffi封装的下载器，支持修改http版本，tls指纹
 
+pip install RabbitSpider==2.0.0
+
+创建项目命令：
+    rabbit create [项目名称] [爬虫文件名称]
+
     import asyncio
     from jsonpath import jsonpath
     from RabbitSpider.core.engine import Engine
