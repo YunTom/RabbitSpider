@@ -1,5 +1,7 @@
 基于rabbitmq 做消息队列开发的分布式异步爬虫框架，支持web监控，定时任务，运行模式 auto(适用于单机，自动关闭任务) 先生产后消费，m 只生产，w 只消费(一直监听任务)
 
+使用curl_cffi封装的下载器，支持修改http版本，tls指纹
+
     import asyncio
     from jsonpath import jsonpath
     from RabbitSpider.core.engine import Engine
