@@ -132,11 +132,12 @@ class Engine(object):
                     task.cancel()
         try:
             await self._channel.declare_queue(name=self.name, passive=True)
-            await incoming_message.ack()
         except Exception:
             self._future.set_result('done') if self._future else None
             await self.middlewares.download.exit(self.session)
             self.logger.info(f'队列{self.name}已删除！')
+        else:
+            await incoming_message.ack()
 
     async def run(self, mode):
         self.logger.info(f'{self.name}任务开始')
