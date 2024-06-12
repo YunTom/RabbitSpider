@@ -1,7 +1,6 @@
 import asyncio
 import os
 import pickle
-import sys
 from collections.abc import AsyncGenerator, Coroutine
 from traceback import print_exc
 from typing import Optional
@@ -22,7 +21,7 @@ from aio_pika.exceptions import QueueEmpty
 
 
 class Engine(object):
-    name = os.path.basename(sys.argv[0])
+    name = os.path.basename(__file__)
     http_version = CurlHttpVersion.V1_0
     impersonate = "chrome120"
 
