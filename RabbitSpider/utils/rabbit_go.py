@@ -1,6 +1,5 @@
 import sys
 import asyncio
-import time
 import requests
 import socket
 from datetime import datetime, timedelta
