@@ -10,6 +10,7 @@ def main():
     args = parser.parse_args()
 
     spider = f'''import asyncio
+import os
 from RabbitSpider.core.engine import Engine
 from RabbitSpider.http.request import Request
 from RabbitSpider.http.response import Response
@@ -18,7 +19,7 @@ from {args.project}.items import {args.model.capitalize()}Item
 
 
 class {args.model.capitalize()}(Engine):
-
+    name = os.path.basename(__file__)
     async def start_requests(self):
         pass
 
