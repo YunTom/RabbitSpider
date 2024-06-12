@@ -20,6 +20,7 @@ from {args.project}.items import {args.model.capitalize()}Item
 
 class {args.model.capitalize()}(Engine):
     name = os.path.basename(__file__)
+    
     async def start_requests(self):
         pass
 
