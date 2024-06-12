@@ -60,7 +60,7 @@ async def get_task():
         item = TaskData.model_validate(result).model_dump()
         item['total'] = await scheduler.get_message_count(channel, item['name'])
         resp.append(item)
-    connection.close(), channel.close()
+    await connection.close(), await channel.close()
     return resp
 
 
