@@ -132,11 +132,6 @@ class Engine(object):
         else:
             await incoming_message.ack()
 
-    async def close(self):
-        await self.middlewares.download.exit(self.session)
-        await self._channel.close()
-        await self._connection.close()
-
     async def run(self, mode):
         self.logger.info(f'{self.name}任务开始')
         self._connection, self._channel = await self._scheduler.connect()
@@ -152,5 +147,7 @@ class Engine(object):
         else:
             raise RabbitExpect('执行模式错误！')
         await self.pipelines.close_spider()
-        await self.close()
+        await self._channel.close()
+        await self._connection.close()
+        await self.middlewares.download.exit(self.session)
         self.logger.info(f'{self.name}任务完成')
