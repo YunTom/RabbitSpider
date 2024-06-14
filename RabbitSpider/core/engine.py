@@ -33,26 +33,19 @@ class Engine(object):
         self._channel = None
         self._sync = sync
         self.settings = SettingManager()
-        self._filter = RFPDupeFilter(self.name,
-                                     self.settings.get('REDIS_QUEUE_HOST'),
-                                     self.settings.get('REDIS_QUEUE_PORT'),
-                                     self.settings.get('REDIS_QUEUE_DB'))
         self._scheduler = Scheduler(self.settings.get('RABBIT_USERNAME'),
                                     self.settings.get('RABBIT_PASSWORD'),
                                     self.settings.get('RABBIT_HOST'),
                                     self.settings.get('RABBIT_PORT'),
                                     self.settings.get('RABBIT_VIRTUAL_HOST'))
+        self._filter = RFPDupeFilter(self.name,
+                                     self.settings.get('REDIS_QUEUE_HOST'),
+                                     self.settings.get('REDIS_QUEUE_PORT'),
+                                     self.settings.get('REDIS_QUEUE_DB'))
         self.logger = Logger(self.settings, self.name).logger
         self._task_manager = TaskManager(self._sync)
         self.middlewares = MiddlewareManager.create_instance(self.http_version, self.impersonate, self)
         self.pipelines = PipelineManager.create_instance(self)
-
-    async def start_spider(self):
-        self._connection, self._channel = await self._scheduler.connect()
-        self.session = await self.middlewares.download.new_session()
-        await self.pipelines.open_spider()
-        await self._scheduler.create_queue(self._channel, self.name)
-        await self.routing(self.start_requests())
 
     async def start_requests(self):
         """初始请求"""
@@ -69,10 +62,10 @@ class Engine(object):
                 if res.dupe_filter:
                     if self._filter.request_seen(ret):
                         self.logger.info(f'生产数据：{res.model_dump()}')
-                        await self._scheduler.producer(self._channel, queue=self.name, body=ret)
+                        await self._scheduler.producer(self._channel, queue=self.name, body=res.model_dump())
                 else:
                     self.logger.info(f'生产数据：{res.model_dump()}')
-                    await self._scheduler.producer(self._channel, queue=self.name, body=ret)
+                    await self._scheduler.producer(self._channel, queue=self.name, body=res.model_dump())
             elif isinstance(res, Item):
                 await self.pipelines.process_item(res)
 
@@ -87,6 +80,10 @@ class Engine(object):
         else:
             raise RabbitExpect('回调函数返回类型错误！')
 
+    async def produce(self):
+        await self._scheduler.create_queue(self._channel, self.name)
+        await self.routing(self.start_requests())
+
     async def crawl(self):
         while True:
             try:
@@ -94,10 +91,7 @@ class Engine(object):
                                                                                                      queue=self.name)
             except QueueEmpty:
                 if self._task_manager.all_done():
-                    await self.middlewares.download.exit(self.session)
                     await self._scheduler.delete_queue(self._channel, self.name)
-                    await self._channel.close()
-                    await self._connection.close()
                     break
                 else:
                     continue
@@ -134,21 +128,29 @@ class Engine(object):
             await self._channel.declare_queue(name=self.name, passive=True)
         except Exception:
             self._future.set_result('done') if self._future else None
-            await self.middlewares.download.exit(self.session)
             self.logger.info(f'队列{self.name}已删除！')
         else:
             await incoming_message.ack()
 
+    async def close(self):
+        await self.middlewares.download.exit(self.session)
+        await self._channel.close()
+        await self._connection.close()
+
     async def run(self, mode):
         self.logger.info(f'{self.name}任务开始')
+        self._connection, self._channel = await self._scheduler.connect()
+        self.session = await self.middlewares.download.new_session()
+        await self.pipelines.open_spider()
         if mode == 'auto':
-            await self.start_spider()
+            await self.produce()
             await self.crawl()
         elif mode == 'm':
-            await self.start_spider()
+            await self.produce()
         elif mode == 'w':
             await self.consume()
         else:
             raise RabbitExpect('执行模式错误！')
         await self.pipelines.close_spider()
+        await self.close()
         self.logger.info(f'{self.name}任务完成')
