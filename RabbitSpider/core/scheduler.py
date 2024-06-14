@@ -1,3 +1,4 @@
+import pickle
 from typing import Callable, Optional
 from aio_pika import connect_robust, Message
 
@@ -24,9 +25,10 @@ class Scheduler(object):
         await queue.purge()
 
     @staticmethod
-    async def producer(channel, queue: str, body: bytes, priority: int = 1):
-        await channel.default_exchange.publish(Message(body=body, delivery_mode=2, priority=priority),
-                                               routing_key=queue)
+    async def producer(channel, queue: str, body: dict):
+        ret = pickle.dumps(body)
+        await channel.default_exchange.publish(
+            Message(body=ret, delivery_mode=2, priority=body['retry']), routing_key=queue)
 
     @staticmethod
     async def consumer(channel, queue: str, callback: Optional[Callable] = None, prefetch: int = 1):
