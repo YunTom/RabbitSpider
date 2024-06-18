@@ -17,14 +17,11 @@ from RabbitSpider.utils.expections import RabbitExpect
 from RabbitSpider.utils.log import Logger
 from RabbitSpider.items import Item
 from RabbitSpider.core.scheduler import Scheduler
-from curl_cffi import CurlHttpVersion
 from aio_pika.exceptions import QueueEmpty
 
 
 class Engine(object):
     name = os.path.basename(sys.argv[0])
-    http_version = CurlHttpVersion.V1_0
-    impersonate = "chrome120"
     custom_settings = {}
 
     def __init__(self, sync):
@@ -45,7 +42,8 @@ class Engine(object):
                                      self.settings.get('REDIS_QUEUE_DB'))
         self.logger = Logger(self.settings, self.name).logger
         self._task_manager = TaskManager(self._sync)
-        self.middlewares = MiddlewareManager.create_instance(self.http_version, self.impersonate, self)
+        self.middlewares = MiddlewareManager.create_instance(self.settings.get('HTTP_VERSION'),
+                                                             self.settings.get('IMPERSONATE'), self)
         self.pipelines = PipelineManager.create_instance(self)
 
     async def start_requests(self):
