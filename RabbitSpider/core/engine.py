@@ -112,7 +112,7 @@ class Engine(object):
     async def deal_resp(self, incoming_message):
         ret = pickle.loads(incoming_message.body)
         self.logger.info(f'消费数据：{ret}')
-        response = await self.middlewares.downloader(ret)
+        response = await self.middlewares.downloader(Request(**ret))
         if response:
             try:
                 callback = getattr(self, ret['callback'])

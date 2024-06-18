@@ -128,27 +128,27 @@ class MiddlewareManager(object):
 
     async def _process_request(self, request):
         for process_request in self.methods['process_request']:
-            result = await process_request(Request(**request), self.spider)
-            if isinstance(result, (Request, Response)):
-                return result
-        return await self.download.fetch(self.spider.session, request)
+            request = await process_request(request, self.spider)
+            if isinstance(request, Response):
+                return request
+        return await self.download.fetch(self.spider.session, request.model_dump())
 
     async def _process_response(self, request, response):
         for process_response in reversed(self.methods['process_response']):
-            result = await process_response(Request(**request), response, self.spider)
-            if isinstance(result, (Request, Response)):
-                return result
+            response = await process_response(request, response, self.spider)
+            if isinstance(response, Request):
+                return response
         return response
 
     async def _process_exception(self, request, exc):
         for process_exception in self.methods['process_exception']:
-            result = await process_exception(Request(**request), exc, self.spider)
+            result = await process_exception(request, exc, self.spider)
             if isinstance(result, (Request, Response)):
                 return result
         else:
             raise exc
 
-    async def downloader(self, request):
+    async def downloader(self, request: Request):
         try:
             resp = await self._process_request(request)
         except Exception as exc:
