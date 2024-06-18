@@ -39,7 +39,7 @@ class {args.model.capitalize()}Item(Item):
     pass
 '''
 
-    middleware = f'''from RabbitSpider.middleware import BaseMiddleware
+    middleware = f'''from RabbitSpider.middlewares import BaseMiddleware
 
 
 class {args.model.capitalize()}Middleware(BaseMiddleware):
