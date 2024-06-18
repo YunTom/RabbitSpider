@@ -31,12 +31,13 @@ def load_class(_path):
 
 
 class SettingManager(object):
-    def __init__(self):
+    def __init__(self, custom_settings: dict):
         settings = import_module('settings')
         self.attribute = {}
         for key in dir(settings):
             if key.isupper():
                 self.attribute[key] = getattr(settings, key)
+        self.attribute.update(custom_settings)
 
     def __setitem__(self, key, value):
         self.attribute[key] = value

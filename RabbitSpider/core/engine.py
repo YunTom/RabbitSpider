@@ -25,6 +25,7 @@ class Engine(object):
     name = os.path.basename(sys.argv[0])
     http_version = CurlHttpVersion.V1_0
     impersonate = "chrome120"
+    custom_settings = {}
 
     def __init__(self, sync):
         self.session = None
@@ -32,7 +33,7 @@ class Engine(object):
         self._connection = None
         self._channel = None
         self._sync = sync
-        self.settings = SettingManager()
+        self.settings = SettingManager(self.custom_settings)
         self._scheduler = Scheduler(self.settings.get('RABBIT_USERNAME'),
                                     self.settings.get('RABBIT_PASSWORD'),
                                     self.settings.get('RABBIT_HOST'),
