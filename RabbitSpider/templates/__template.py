@@ -32,7 +32,8 @@ if __name__ == '__main__':
     asyncio.run(go({args.model.capitalize()}, 'auto', 10))
 '''
 
-    item = f'''from RabbitSpider.items import Item, Field
+    item = f'''from RabbitSpider.items import Field
+from RabbitSpider.items.item import Item
 
 
 class {args.model.capitalize()}Item(Item):
@@ -73,11 +74,13 @@ class {args.model.capitalize()}Pipeline(BasePipeline):
         pass
 '''
 
-    setting = f'''# Rabbitmq
-RABBIT_HOST = '127.0.0.1'
+    setting = f'''from curl_cffi import CurlHttpVersion
+
+# Rabbitmq
+RABBIT_HOST = '121.40.85.162'
 RABBIT_PORT = 5672
-RABBIT_USERNAME = 'yuntom'
-RABBIT_PASSWORD = '123456'
+RABBIT_USERNAME = 'admin'
+RABBIT_PASSWORD = 'admin123'
 RABBIT_VIRTUAL_HOST = '/'
 
 # redis 未配置默认使用set去重
@@ -89,13 +92,25 @@ REDIS_QUEUE_DB = 1
 LOG_LEVEL = 'ERROR'
 
 # 中间件
-MIDDLEWARES = ['middlewares.{args.model.capitalize()}Middleware']
+MIDDLEWARES = [
+    'RabbitSpider.middlewares.retry.RetryMiddleware',
+    'middlewares.MuMiddleware'
+]
 
 # 管道
-ITEM_PIPELINES = ['pipelines.{args.model.capitalize()}Pipeline']
+ITEM_PIPELINES = ['pipelines.MuPipeline']
+
+# http版本
+HTTP_VERSION = CurlHttpVersion.V1_0
+# tls指纹
+IMPERSONATE = 'chrome120'
 
 # 最大重试次数
 MAX_RETRY = 5
+# 重试状态码
+RETRY_HTTP_CODE = []
+# 异常重试
+RETRY_EXCEPTIONS = []
 '''
     if not os.path.exists(os.path.join(os.getcwd(), f'{args.project}')):
         os.makedirs(f'./{args.project}/spiders/')
@@ -116,7 +131,3 @@ MAX_RETRY = 5
         print(f'{args.project}项目创建完成')
     else:
         print(f'目录{args.project}已存在')
-
-
-if __name__ == '__main__':
-    main()
