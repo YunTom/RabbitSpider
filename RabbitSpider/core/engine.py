@@ -15,7 +15,7 @@ from RabbitSpider.utils.control import MiddlewareManager
 from RabbitSpider.utils.dupefilter import RFPDupeFilter
 from RabbitSpider.utils.exceptions import RabbitExpect
 from RabbitSpider.utils.log import Logger
-from RabbitSpider.items import Item
+from RabbitSpider.items.item import Item
 from RabbitSpider.core.scheduler import Scheduler
 from aio_pika.exceptions import QueueEmpty
 
