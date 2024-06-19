@@ -13,7 +13,7 @@ from RabbitSpider.utils.control import SettingManager
 from RabbitSpider.utils.control import PipelineManager
 from RabbitSpider.utils.control import MiddlewareManager
 from RabbitSpider.utils.dupefilter import RFPDupeFilter
-from RabbitSpider.utils.expections import RabbitExpect
+from RabbitSpider.utils.exceptions import RabbitExpect
 from RabbitSpider.utils.log import Logger
 from RabbitSpider.items import Item
 from RabbitSpider.core.scheduler import Scheduler
