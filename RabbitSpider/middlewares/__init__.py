@@ -20,4 +20,4 @@ class BaseMiddleware:
 
     @classmethod
     def create_instance(cls, spider):
-        cls(spider)
+        return cls(spider)
