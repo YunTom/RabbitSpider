@@ -84,7 +84,7 @@ class PipelineManager(object):
 
     def _add_pipe(self, pipelines):
         for pipeline in pipelines:
-            pipeline_obj = load_class(pipeline)()
+            pipeline_obj = load_class(pipeline).create_instance(self.spider)
             if hasattr(pipeline_obj, 'open_spider'):
                 self.methods['open_spider'].append(getattr(pipeline_obj, 'open_spider'))
             if hasattr(pipeline_obj, 'process_item'):
@@ -119,7 +119,7 @@ class MiddlewareManager(object):
 
     def _add_middleware(self, middlewares):
         for middleware in middlewares:
-            middleware_obj = load_class(middleware)()
+            middleware_obj = load_class(middleware).create_instance(self.spider)
             if hasattr(middleware_obj, 'process_request'):
                 self.methods['process_request'].append(getattr(middleware_obj, 'process_request'))
             if hasattr(middleware_obj, 'process_response'):
@@ -130,22 +130,30 @@ class MiddlewareManager(object):
     async def _process_request(self, request):
         for process_request in self.methods['process_request']:
             request = await process_request(request, self.spider)
-            if isinstance(request, Response):
+            if isinstance(request, (Request, Response)):
                 return request
-        return await self.download.fetch(self.spider.session, request.model_dump())
+            if request:
+                break
+        else:
+            return await self.download.fetch(self.spider.session, request.model_dump())
 
     async def _process_response(self, request, response):
         for process_response in reversed(self.methods['process_response']):
             response = await process_response(request, response, self.spider)
-            if isinstance(response, Request):
+            if isinstance(response, (Request, Response)):
                 return response
-        return response
+            if response:
+                break
+        else:
+            return response
 
     async def _process_exception(self, request, exc):
         for process_exception in self.methods['process_exception']:
             result = await process_exception(request, exc, self.spider)
             if isinstance(result, (Request, Response)):
                 return result
+            if result:
+                break
         else:
             raise exc
 
@@ -157,12 +165,7 @@ class MiddlewareManager(object):
         if isinstance(resp, Response):
             resp = await self._process_response(request, resp)
         if isinstance(resp, Request):
-            if resp.retry < self.spider.settings.get('MAX_RETRY'):
-                resp.retry += 1
-                return await self.spider.routing(resp)
-            else:
-                self.spider.logger.error(f'请求失败：{request}')
-            return None
+            return await self.spider.routing(resp)
         return resp
 
     @classmethod
