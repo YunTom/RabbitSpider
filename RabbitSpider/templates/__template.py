@@ -77,10 +77,10 @@ class {args.model.capitalize()}Pipeline(BasePipeline):
     setting = f'''from curl_cffi import CurlHttpVersion
 
 # Rabbitmq
-RABBIT_HOST = '121.40.85.162'
+RABBIT_HOST = '127.0.0.1'
 RABBIT_PORT = 5672
-RABBIT_USERNAME = 'admin'
-RABBIT_PASSWORD = 'admin123'
+RABBIT_USERNAME = 'yuntom'
+RABBIT_PASSWORD = '123456'
 RABBIT_VIRTUAL_HOST = '/'
 
 # redis 未配置默认使用set去重
@@ -94,11 +94,11 @@ LOG_LEVEL = 'ERROR'
 # 中间件
 MIDDLEWARES = [
     'RabbitSpider.middlewares.retry.RetryMiddleware',
-    'middlewares.MuMiddleware'
+    'middlewares.{args.model.capitalize()}Middleware'
 ]
 
 # 管道
-ITEM_PIPELINES = ['pipelines.MuPipeline']
+ITEM_PIPELINES = ['pipelines.{args.model.capitalize()}Pipeline']
 
 # http版本
 HTTP_VERSION = CurlHttpVersion.V1_0
