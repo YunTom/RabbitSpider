@@ -1,4 +1,6 @@
 class BasePipeline(object):
+    def __init__(self, spider):
+        pass
 
     async def open_spider(self, spider):
         """初始化数据库"""
@@ -10,3 +12,7 @@ class BasePipeline(object):
 
     async def close_spider(self, spider):
         pass
+
+    @classmethod
+    def create_instance(cls, spider):
+        cls(spider)
