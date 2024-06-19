@@ -45,6 +45,9 @@ class SettingManager(object):
     def get(self, key):
         return self[key] if self[key] else None
 
+    def getlist(self, key):
+        return self[key] if self[key] else []
+
     def set(self, key, value):
         self[key] = value
 
@@ -73,7 +76,7 @@ class PipelineManager(object):
     def __init__(self, spider):
         self.spider = spider
         self.methods: Dict[str, List[Callable]] = defaultdict(list)
-        pipelines = spider.settings.get('ITEM_PIPELINES')
+        pipelines = spider.settings.getlist('ITEM_PIPELINES')
         self._add_pipe(pipelines)
 
     def _add_pipe(self, pipelines):
@@ -108,7 +111,7 @@ class MiddlewareManager(object):
         self.spider = spider
         self.download = CurlDownload(http_version, impersonate)
         self.methods: Dict[str, List[Callable]] = defaultdict(list)
-        middlewares = spider.settings.get('MIDDLEWARES')
+        middlewares = spider.settings.getlist('MIDDLEWARES')
         self._add_middleware(middlewares)
 
     def _add_middleware(self, middlewares):
