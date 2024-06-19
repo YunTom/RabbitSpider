@@ -11,15 +11,17 @@ class RetryMiddleware(BaseMiddleware):
     async def process_response(self, request, response, spider):
         if response.status in self.retry_http_code:
             if request.retry < self.max_retry:
+                request.retry += 1
                 return request
             else:
                 spider.logger.warning(f'丢弃{request.model_dump()}，状态码：{response.status}')
-                return True
+        return True
 
     async def process_exception(self, request, exc, spider):
         if exc.name in self.retry_exceptions:
             if request.retry < self.max_retry:
+                request.retry += 1
                 return request
             else:
                 spider.logger.warning(f'丢弃{request.model_dump()}，异常：{exc}')
-                return True
+        return True
