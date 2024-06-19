@@ -123,20 +123,20 @@ class MiddlewareManager(object):
 
     async def _process_request(self, request):
         for process_request in self.methods['process_request']:
-            request = await process_request(request, self.spider)
-            if isinstance(request, (Request, Response)):
-                return request
-            if request:
+            result = await process_request(request, self.spider)
+            if isinstance(result, (Request, Response)):
+                return result
+            if result:
                 break
         else:
             return await self.download.fetch(self.spider.session, request.model_dump())
 
     async def _process_response(self, request, response):
         for process_response in reversed(self.methods['process_response']):
-            response = await process_response(request, response, self.spider)
-            if isinstance(response, (Request, Response)):
-                return response
-            if response:
+            result = await process_response(request, response, self.spider)
+            if isinstance(result, (Request, Response)):
+                return result
+            if result:
                 break
         else:
             return response
