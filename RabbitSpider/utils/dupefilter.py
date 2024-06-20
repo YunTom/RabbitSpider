@@ -15,7 +15,7 @@ class RFPDupeFilter(object):
             self.repeat = set()
 
     def request_seen(self, obj):
-        fingerprint = hashlib.sha1(obj).hexdigest()
+        fingerprint = hashlib.sha1(pickle.dumps(obj)).hexdigest()
         data = pickle.dumps(fingerprint)
         if self.redis:
             result = self.redis.sadd(self.repeat, data)
@@ -26,4 +26,3 @@ class RFPDupeFilter(object):
             else:
                 self.repeat.add(data)
                 return True
-
