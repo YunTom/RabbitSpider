@@ -5,11 +5,12 @@ from w3lib.encoding import http_content_type_encoding, html_to_unicode
 
 
 class Response:
-    def __init__(self, content=None, status_code=None, charset=None, res=None):
+    def __init__(self, content=None, status_code=None, charset=None, headers=None, res=None):
         self.url = str(res.url)
         self.body = self.content = content
         self.status = self.status_code = status_code
         self.charset = charset
+        self.headers = headers
         self.res = res
         self.cookies = {k: v for k, v in self.res.cookies.items()}
         self.__r = parsel.Selector(self.text)
