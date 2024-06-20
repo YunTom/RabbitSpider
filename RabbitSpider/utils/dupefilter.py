@@ -14,8 +14,15 @@ class RFPDupeFilter(object):
             self.redis = None
             self.repeat = set()
 
-    def request_seen(self, obj):
-        fingerprint = hashlib.sha1(pickle.dumps(obj)).hexdigest()
+    def request_seen(self, obj: dict):
+        sha1 = hashlib.sha1()
+        sha1.update(obj.get('url').encode('utf-8'))
+        sha1.update(obj.get('method').encode('utf-8'))
+        sha1.update(str(obj.get('params')).encode('utf-8') or b'')
+        sha1.update(str(obj.get('data')).encode('utf-8') or b'')
+        sha1.update(str(obj.get('json')).encode('utf-8') or b'')
+        sha1.update(str(obj.get('retry')).encode('utf-8') or b'')
+        fingerprint = sha1.hexdigest()
         data = pickle.dumps(fingerprint)
         if self.redis:
             result = self.redis.sadd(self.repeat, data)
