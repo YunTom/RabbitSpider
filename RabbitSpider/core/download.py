@@ -5,7 +5,7 @@ from RabbitSpider.http.response import Response
 class CurlDownload(object):
     def __init__(self, http_version, impersonate):
         self.impersonate = impersonate
-        self.http_version=http_version
+        self.http_version = http_version
 
     @staticmethod
     async def new_session():
@@ -44,6 +44,7 @@ class CurlDownload(object):
             content = res.content
             status_code = res.status_code
             charset = res.charset
+            headers = res.headers
             response = Response(
-                content, status_code, charset, res)
+                content, status_code, charset, headers, res)
             return response
