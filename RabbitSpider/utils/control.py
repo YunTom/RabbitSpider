@@ -76,8 +76,7 @@ class PipelineManager(object):
     def __init__(self, spider):
         self.spider = spider
         self.methods: Dict[str, List[Callable]] = defaultdict(list)
-        pipelines = spider.settings.getlist('ITEM_PIPELINES')
-        self._add_pipe(pipelines)
+        self._add_pipe(spider.settings.getlist('ITEM_PIPELINES'))
 
     def _add_pipe(self, pipelines):
         for pipeline in pipelines:
@@ -107,12 +106,11 @@ class PipelineManager(object):
 
 
 class MiddlewareManager(object):
-    def __init__(self, spider, http_version, impersonate):
+    def __init__(self, spider):
         self.spider = spider
-        self.download = CurlDownload(http_version, impersonate)
+        self.download = CurlDownload(spider.settings.get('HTTP_VERSION'), spider.settings.get('IMPERSONATE'))
         self.methods: Dict[str, List[Callable]] = defaultdict(list)
-        middlewares = spider.settings.getlist('MIDDLEWARES')
-        self._add_middleware(middlewares)
+        self._add_middleware(spider.settings.getlist('MIDDLEWARES'))
 
     def _add_middleware(self, middlewares):
         for middleware in middlewares:
@@ -166,5 +164,5 @@ class MiddlewareManager(object):
         return resp
 
     @classmethod
-    def create_instance(cls, http_version, impersonate, spider):
-        return cls(spider, http_version, impersonate)
+    def create_instance(cls, spider):
+        return cls(spider)
