@@ -26,25 +26,24 @@ class Engine(object):
 
     def __init__(self, sync):
         self.session = None
-        self._future = None
-        self._connection = None
-        self._channel = None
-        self._sync = sync
+        self.__future = None
+        self.__connection = None
+        self.__channel = None
+        self.__sync = sync
         self.settings = SettingManager(self.custom_settings)
-        self._scheduler = Scheduler(self.settings.get('RABBIT_USERNAME'),
-                                    self.settings.get('RABBIT_PASSWORD'),
-                                    self.settings.get('RABBIT_HOST'),
-                                    self.settings.get('RABBIT_PORT'),
-                                    self.settings.get('RABBIT_VIRTUAL_HOST'))
-        self._filter = RFPDupeFilter(self.name,
-                                     self.settings.get('REDIS_QUEUE_HOST'),
-                                     self.settings.get('REDIS_QUEUE_PORT'),
-                                     self.settings.get('REDIS_QUEUE_DB'))
         self.logger = Logger(self.settings, self.name).logger
-        self._task_manager = TaskManager(self._sync)
-        self.middlewares = MiddlewareManager.create_instance(self.settings.get('HTTP_VERSION'),
-                                                             self.settings.get('IMPERSONATE'), self)
-        self.pipelines = PipelineManager.create_instance(self)
+        self.__task_manager = TaskManager(self.__sync)
+        self.__middlewares = MiddlewareManager.create_instance(self)
+        self.__pipelines = PipelineManager.create_instance(self)
+        self.__scheduler = Scheduler(self.settings.get('RABBIT_USERNAME'),
+                                     self.settings.get('RABBIT_PASSWORD'),
+                                     self.settings.get('RABBIT_HOST'),
+                                     self.settings.get('RABBIT_PORT'),
+                                     self.settings.get('RABBIT_VIRTUAL_HOST'))
+        self.__filter = RFPDupeFilter(self.name,
+                                      self.settings.get('REDIS_HOST'),
+                                      self.settings.get('REDIS_PORT'),
+                                      self.settings.get('REDIS_DB'))
 
     async def start_requests(self):
         """初始请求"""
@@ -57,16 +56,15 @@ class Engine(object):
     async def routing(self, result):
         async def rule(res):
             if isinstance(res, Request):
-                ret = pickle.dumps(res.model_dump())
                 if res.dupe_filter:
-                    if self._filter.request_seen(ret):
+                    if self.__filter.request_seen(res.model_dump()):
                         self.logger.info(f'生产数据：{res.model_dump()}')
-                        await self._scheduler.producer(self._channel, queue=self.name, body=res.model_dump())
+                        await self.__scheduler.producer(self.__channel, queue=self.name, body=res.model_dump())
                 else:
                     self.logger.info(f'生产数据：{res.model_dump()}')
-                    await self._scheduler.producer(self._channel, queue=self.name, body=res.model_dump())
+                    await self.__scheduler.producer(self.__channel, queue=self.name, body=res.model_dump())
             elif isinstance(res, Item):
-                await self.pipelines.process_item(res)
+                await self.__pipelines.process_item(res)
 
         if isinstance(result, AsyncGenerator):
             async for r in result:
@@ -80,38 +78,38 @@ class Engine(object):
             raise RabbitExpect('回调函数返回类型错误！')
 
     async def produce(self):
-        await self._scheduler.create_queue(self._channel, self.name)
+        await self.__scheduler.create_queue(self.__channel, self.name)
         await self.routing(self.start_requests())
 
     async def crawl(self):
         while True:
             try:
-                incoming_message: Optional[AbstractIncomingMessage] = await self._scheduler.consumer(self._channel,
-                                                                                                     queue=self.name)
+                incoming_message: Optional[AbstractIncomingMessage] = await self.__scheduler.consumer(self.__channel,
+                                                                                                      queue=self.name)
             except QueueEmpty:
-                if self._task_manager.all_done():
-                    await self._scheduler.delete_queue(self._channel, self.name)
+                if self.__task_manager.all_done():
+                    await self.__scheduler.delete_queue(self.__channel, self.name)
                     break
                 else:
                     continue
             except Exception:
                 break
             if incoming_message:
-                await self._task_manager.semaphore.acquire()
-                self._task_manager.create_task(self.deal_resp(incoming_message))
+                await self.__task_manager.semaphore.acquire()
+                self.__task_manager.create_task(self.deal_resp(incoming_message))
             else:
                 print(incoming_message)
 
     async def consume(self):
-        await self._scheduler.consumer(self._channel, queue=self.name, callback=self.deal_resp,
-                                       prefetch=self._sync)
-        self._future = asyncio.Future()
-        await self._future
+        await self.__scheduler.consumer(self.__channel, queue=self.name, callback=self.deal_resp,
+                                        prefetch=self.__sync)
+        self.__future = asyncio.Future()
+        await self.__future
 
     async def deal_resp(self, incoming_message):
         ret = pickle.loads(incoming_message.body)
         self.logger.info(f'消费数据：{ret}')
-        response = await self.middlewares.downloader(Request(**ret))
+        response = await self.__middlewares.downloader(Request(**ret))
         if response:
             try:
                 callback = getattr(self, ret['callback'])
@@ -124,18 +122,18 @@ class Engine(object):
                 for task in asyncio.all_tasks():
                     task.cancel()
         try:
-            await self._channel.declare_queue(name=self.name, passive=True)
+            await self.__channel.declare_queue(name=self.name, passive=True)
         except Exception:
-            self._future.set_result('done') if self._future else None
+            self.__future.set_result('done') if self.__future else None
             self.logger.info(f'队列{self.name}已删除！')
         else:
             await incoming_message.ack()
 
     async def run(self, mode):
         self.logger.info(f'{self.name}任务开始')
-        self._connection, self._channel = await self._scheduler.connect()
-        self.session = await self.middlewares.download.new_session()
-        await self.pipelines.open_spider()
+        self.__connection, self.__channel = await self.__scheduler.connect()
+        self.session = await self.__middlewares.download.new_session()
+        await self.__pipelines.open_spider()
         if mode == 'auto':
             await self.produce()
             await self.crawl()
@@ -145,8 +143,8 @@ class Engine(object):
             await self.consume()
         else:
             raise RabbitExpect('执行模式错误！')
-        await self.pipelines.close_spider()
-        await self._channel.close()
-        await self._connection.close()
-        await self.middlewares.download.exit(self.session)
+        await self.__pipelines.close_spider()
+        await self.__channel.close()
+        await self.__connection.close()
+        await self.__middlewares.download.exit(self.session)
         self.logger.info(f'{self.name}任务完成')
