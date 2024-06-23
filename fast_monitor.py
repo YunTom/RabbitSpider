@@ -10,13 +10,9 @@ from fastapi.encoders import jsonable_encoder
 from sqlalchemy.orm.session import sessionmaker
 from sqlalchemy import create_engine, Table, MetaData, select, update, insert, delete
 
-settings = SettingManager()
+settings = SettingManager({})
 
-scheduler = Scheduler(settings.get('RABBIT_USERNAME'),
-                      settings.get('RABBIT_PASSWORD'),
-                      settings.get('RABBIT_HOST'),
-                      settings.get('RABBIT_PORT'),
-                      settings.get('RABBIT_VIRTUAL_HOST'))
+scheduler = Scheduler(settings)
 
 engine = create_engine('mysql+pymysql://root:123456@127.0.0.1:3306/monitor')
 table = Table('monitor_table', MetaData(), autoload_with=engine)
