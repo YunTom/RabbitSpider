@@ -18,6 +18,9 @@ def tmpl_file_path(_path):
 
 
 def template_to_file(_path, **kwargs):
+    if kwargs['project'].lower() == 'test':
+        print(f'项目名称不可以是{kwargs["project"]}')
+        return
     try:
         shutil.copytree(settings.get('TEMPLATE_DIR'), _path)
     except Exception:
