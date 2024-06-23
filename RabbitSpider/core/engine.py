@@ -2,7 +2,7 @@ import asyncio
 import os
 import sys
 import pickle
-from collections.abc import AsyncGenerator, Coroutine
+from collections.abc import AsyncGenerator, Coroutine, Generator
 from traceback import print_exc
 from typing import Optional
 from aio_pika.abc import AbstractIncomingMessage
@@ -12,7 +12,7 @@ from RabbitSpider.utils.control import TaskManager
 from RabbitSpider.utils.control import SettingManager
 from RabbitSpider.utils.control import PipelineManager
 from RabbitSpider.utils.control import MiddlewareManager
-from RabbitSpider.utils.dupefilter import RFPDupeFilter
+from RabbitSpider.utils.control import FilterManager
 from RabbitSpider.utils.exceptions import RabbitExpect
 from RabbitSpider.utils.log import Logger
 from RabbitSpider.items.item import Item
@@ -31,19 +31,12 @@ class Engine(object):
         self.__channel = None
         self.__sync = sync
         self.settings = SettingManager(self.custom_settings)
+        self.__scheduler = Scheduler(self.settings)
+        self.__filter = FilterManager(self.settings)
         self.logger = Logger(self.settings, self.name).logger
         self.__task_manager = TaskManager(self.__sync)
         self.__middlewares = MiddlewareManager.create_instance(self)
         self.__pipelines = PipelineManager.create_instance(self)
-        self.__scheduler = Scheduler(self.settings.get('RABBIT_USERNAME'),
-                                     self.settings.get('RABBIT_PASSWORD'),
-                                     self.settings.get('RABBIT_HOST'),
-                                     self.settings.get('RABBIT_PORT'),
-                                     self.settings.get('RABBIT_VIRTUAL_HOST'))
-        self.__filter = RFPDupeFilter(self.name,
-                                      self.settings.get('REDIS_HOST'),
-                                      self.settings.get('REDIS_PORT'),
-                                      self.settings.get('REDIS_DB'))
 
     async def start_requests(self):
         """初始请求"""
@@ -56,11 +49,7 @@ class Engine(object):
     async def routing(self, result):
         async def rule(res):
             if isinstance(res, Request):
-                if res.dupe_filter:
-                    if self.__filter.request_seen(res.model_dump()):
-                        self.logger.info(f'生产数据：{res.model_dump()}')
-                        await self.__scheduler.producer(self.__channel, queue=self.name, body=res.model_dump())
-                else:
+                if self.__filter.request_seen(res):
                     self.logger.info(f'生产数据：{res.model_dump()}')
                     await self.__scheduler.producer(self.__channel, queue=self.name, body=res.model_dump())
             elif isinstance(res, Item):
@@ -69,11 +58,16 @@ class Engine(object):
         if isinstance(result, AsyncGenerator):
             async for r in result:
                 await rule(r)
+        elif isinstance(result, Generator):
+            for r in result:
+                await rule(r)
         elif isinstance(result, Coroutine):
             r = await result
             await rule(r)
         elif isinstance(result, Request):
             await rule(result)
+        elif result is None:
+            pass
         else:
             raise RabbitExpect('回调函数返回类型错误！')
 

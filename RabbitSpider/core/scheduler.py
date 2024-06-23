@@ -4,13 +4,12 @@ from aio_pika import connect_robust, Message
 
 
 class Scheduler(object):
-    def __init__(self, username: str, password: str, host: str,
-                 port: int, virtual_host: str):
-        self.username = username
-        self.password = password
-        self.host = host
-        self.port = port
-        self.virtual_host = virtual_host
+    def __init__(self, settings):
+        self.username = settings.get('RABBIT_USERNAME')
+        self.password = settings.get('RABBIT_PASSWORD')
+        self.host = settings.get('RABBIT_HOST')
+        self.port = settings.get('RABBIT_PORT')
+        self.virtual_host = settings.get('RABBIT_VIRTUAL_HOST')
 
     async def connect(self):
         connection = await connect_robust(host=self.host, login=self.username, password=self.password,

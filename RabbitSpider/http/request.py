@@ -8,7 +8,7 @@ warnings.filterwarnings("ignore", category=UserWarning, module="pydantic")
 class Request(BaseModel):
     url: Optional[str] = None
     params: Optional[dict] = None
-    data: Optional[str] = None
+    data: dict | str | bytes = None
     json: Optional[dict] = None
     method: Optional[str] = 'get'
     headers: Optional[dict] = {}
@@ -18,7 +18,6 @@ class Request(BaseModel):
     allow_redirects: Optional[bool] = True
     callback: Callable | str = 'parse'
     retry: Optional[int] = 0
-    dupe_filter: Optional[bool] = False
     meta: Optional[dict] = {}
 
     @field_validator('callback')

@@ -1,8 +1,10 @@
 import asyncio
 from collections import defaultdict
 from importlib import import_module
+from inspect import iscoroutinefunction
 from typing import Final, Dict, List, Callable
 from asyncio import Task, Future, Semaphore
+from RabbitSpider import default_settings
 from RabbitSpider.http.request import Request
 from RabbitSpider.http.response import Response
 from RabbitSpider.core.download import CurlDownload
@@ -24,9 +26,19 @@ def load_class(_path):
     return cls
 
 
+async def call_function(func, *args, **kwargs):
+    if iscoroutinefunction(func):
+        return await func(*args, **kwargs)
+    else:
+        return func(*args, **kwargs)
+
+
 class SettingManager(object):
     def __init__(self, custom_settings: dict):
-        settings = import_module('settings')
+        try:
+            settings = import_module('settings')
+        except ModuleNotFoundError:
+            settings = default_settings
         self.attribute = {}
         for key in dir(settings):
             if key.isupper():
@@ -89,16 +101,16 @@ class PipelineManager(object):
                 self.methods['close_spider'].append(getattr(pipeline_obj, 'close_spider'))
 
     async def open_spider(self):
-        for open_spider in self.methods['open_spider']:
-            await open_spider(self.spider)
+        for method in self.methods['open_spider']:
+            await call_function(method, self.spider)
 
     async def process_item(self, req):
-        for process_item in self.methods['process_item']:
-            await process_item(req, self.spider)
+        for method in self.methods['process_item']:
+            await call_function(method, req, self.spider)
 
     async def close_spider(self):
-        for close_spider in self.methods['close_spider']:
-            await close_spider(self.spider)
+        for method in self.methods['close_spider']:
+            await call_function(method, self.spider)
 
     @classmethod
     def create_instance(cls, spider):
@@ -123,8 +135,8 @@ class MiddlewareManager(object):
                 self.methods['process_exception'].append(getattr(middleware_obj, 'process_exception'))
 
     async def _process_request(self, request):
-        for process_request in self.methods['process_request']:
-            result = await process_request(request, self.spider)
+        for method in self.methods['process_request']:
+            result = await call_function(method, request, self.spider)
             if isinstance(result, (Request, Response)):
                 return result
             if result:
@@ -133,8 +145,8 @@ class MiddlewareManager(object):
             return await self.download.fetch(self.spider.session, request.model_dump())
 
     async def _process_response(self, request, response):
-        for process_response in reversed(self.methods['process_response']):
-            result = await process_response(request, response, self.spider)
+        for method in reversed(self.methods['process_response']):
+            result = await call_function(method, request, response, self.spider)
             if isinstance(result, (Request, Response)):
                 return result
             if result:
@@ -143,8 +155,8 @@ class MiddlewareManager(object):
             return response
 
     async def _process_exception(self, request, exc):
-        for process_exception in self.methods['process_exception']:
-            result = await process_exception(request, exc, self.spider)
+        for method in self.methods['process_exception']:
+            result = await call_function(method, request, exc, self.spider)
             if isinstance(result, (Request, Response)):
                 return result
             if result:
@@ -166,3 +178,19 @@ class MiddlewareManager(object):
     @classmethod
     def create_instance(cls, spider):
         return cls(spider)
+
+
+class FilterManager(object):
+    def __init__(self, settings):
+        filter_cls = settings.get('DUPEFILTER_CLASS')
+        if filter_cls:
+            self.filter_obj = load_class(filter_cls)(settings)
+        else:
+            self.filter_obj = None
+
+    def request_seen(self, request: Request) -> bool:
+        if self.filter_obj:
+            result = self.filter_obj.request_seen(request)
+            return result
+        else:
+            return True
