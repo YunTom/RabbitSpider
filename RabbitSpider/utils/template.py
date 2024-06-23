@@ -4,7 +4,7 @@ import argparse
 from string import Template
 from RabbitSpider.utils.control import SettingManager
 
-settings = SettingManager(**{})
+settings = SettingManager({})
 
 
 def tmpl_file_path(_path):
