@@ -18,15 +18,20 @@ def tmpl_file_path(_path):
 
 
 def template_to_file(_path, **kwargs):
-    shutil.copytree(settings.get('TEMPLATE_DIR'), _path)
-    for file in tmpl_file_path(_path):
-        with open(file, 'r', encoding='utf-8') as f:
-            text = Template(f.read()).substitute(**kwargs)
-        with open(file.replace('tmpl', 'py'), 'w', encoding='utf-8') as f:
-            f.write(text)
-        os.remove(file)
-    os.rename(os.path.join(_path, 'spiders', 'basic.py'),
-              os.path.join(_path, 'spiders', 'aa.py'))
+    try:
+        shutil.copytree(settings.get('TEMPLATE_DIR'), _path)
+    except Exception:
+        print(f'{_path}目录已存在')
+    else:
+        for file in tmpl_file_path(_path):
+            with open(file, 'r', encoding='utf-8') as f:
+                text = Template(f.read()).substitute(**kwargs)
+            with open(file.replace('tmpl', 'py'), 'w', encoding='utf-8') as f:
+                f.write(text)
+            os.remove(file)
+        os.rename(os.path.join(_path, 'spiders', 'basic.py'),
+                  os.path.join(_path, 'spiders', f'{kwargs["spider"].lower()}.py'))
+        print(f'{_path}创建完成')
 
 
 def create_project():
@@ -36,4 +41,3 @@ def create_project():
     parser.add_argument('spider', help='参数：文件名称')
     args = parser.parse_args()
     template_to_file(f'./{args.project}', **{'project': f'{args.project}', 'spider': f'{args.spider.capitalize()}'})
-
