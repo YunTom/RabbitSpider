@@ -37,5 +37,3 @@ def create_project():
     args = parser.parse_args()
     template_to_file(f'./{args.project}', **{'project': f'{args.project}', 'spider': f'{args.spider.capitalize()}'})
 
-
-create_project()
