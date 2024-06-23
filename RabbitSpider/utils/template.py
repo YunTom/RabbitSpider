@@ -4,6 +4,8 @@ import argparse
 from string import Template
 from RabbitSpider.utils.control import SettingManager
 
+settings = SettingManager(**{})
+
 
 def tmpl_file_path(_path):
     for i in os.listdir(_path):
@@ -16,7 +18,6 @@ def tmpl_file_path(_path):
 
 
 def template_to_file(_path, **kwargs):
-    settings = SettingManager({})
     shutil.copytree(settings.get('TEMPLATE_DIR'), _path)
     for file in tmpl_file_path(_path):
         with open(file, 'r', encoding='utf-8') as f:
@@ -35,3 +36,6 @@ def create_project():
     parser.add_argument('spider', help='参数：文件名称')
     args = parser.parse_args()
     template_to_file(f'./{args.project}', **{'project': f'{args.project}', 'spider': f'{args.spider.capitalize()}'})
+
+
+create_project()
