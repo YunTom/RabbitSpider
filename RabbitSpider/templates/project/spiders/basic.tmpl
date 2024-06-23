@@ -1,0 +1,21 @@
+import asyncio
+import os
+from RabbitSpider.core.engine import Engine
+from RabbitSpider.http.request import Request
+from RabbitSpider.http.response import Response
+from RabbitSpider.rabbit_go import go
+from ${project}.items import ${spider}Item
+
+
+class ${spider}(Engine):
+    name = os.path.basename(__file__)
+
+    async def start_requests(self):
+        pass
+
+    async def parse(self, request: Request, response: Response):
+        pass
+
+
+if __name__ == '__main__':
+    asyncio.run(go(${spider}, 'auto', 10))

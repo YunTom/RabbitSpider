@@ -1,0 +1,41 @@
+from curl_cffi import CurlHttpVersion
+
+# Rabbitmq
+RABBIT_HOST = '127.0.0.1'
+RABBIT_PORT = 5672
+RABBIT_USERNAME = 'yuntom'
+RABBIT_PASSWORD = '123456'
+RABBIT_VIRTUAL_HOST = '/'
+
+# redis 去重
+# DUPEFILTER_CLASS = 'RabbitSpider.dupefilters.redisdupefilter.RedisDupeFilter'
+# REDIS_QUEUE_HOST = '127.0.0.1'
+# REDIS_QUEUE_PORT = 6379
+# REDIS_QUEUE_DB = 1
+
+# set 去重
+DUPEFILTER_CLASS = 'RabbitSpider.dupefilters.setdupefilter.SetDupeFilter'
+
+# 日志等级
+LOG_LEVEL = 'ERROR'
+
+# 中间件
+MIDDLEWARES = [
+    'RabbitSpider.middlewares.retry.RetryMiddleware',
+    'middlewares.${spider}Middleware'
+]
+
+# 管道
+ITEM_PIPELINES = ['pipelines.${spider}Pipeline']
+
+# http版本
+HTTP_VERSION = CurlHttpVersion.V1_0
+# tls指纹
+IMPERSONATE = 'chrome120'
+
+# 最大重试次数
+MAX_RETRY = 5
+# 重试状态码
+RETRY_HTTP_CODES = []
+# 异常重试
+RETRY_EXCEPTIONS = []
