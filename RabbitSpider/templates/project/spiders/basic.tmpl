@@ -2,7 +2,6 @@ import asyncio
 import os
 from RabbitSpider.core.engine import Engine
 from RabbitSpider.http.request import Request
-from RabbitSpider.http.response import Response
 from RabbitSpider.rabbit_go import go
 from ${project}.items import ${spider}Item
 
@@ -13,7 +12,7 @@ class ${spider}(Engine):
     async def start_requests(self):
         pass
 
-    async def parse(self, request: Request, response: Response):
+    async def parse(self, request, response):
         pass
 
 
