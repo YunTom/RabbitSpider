@@ -17,7 +17,7 @@ from RabbitSpider.utils.exceptions import RabbitExpect
 from RabbitSpider.utils.log import Logger
 from RabbitSpider.items.item import Item
 from RabbitSpider.core.scheduler import Scheduler
-from aio_pika.exceptions import QueueEmpty
+from aio_pika.exceptions import QueueEmpty, ChannelClosed, ChannelNotFoundEntity
 
 
 class Engine(object):
@@ -86,8 +86,12 @@ class Engine(object):
                     break
                 else:
                     continue
-            except Exception:
+            except ChannelNotFoundEntity:
                 break
+            except ChannelClosed:
+                self.logger.warning('rabbitmq重新连接')
+                self.__connection, self.__channel = await self.__scheduler.connect()
+                continue
             if incoming_message:
                 await self.__task_manager.semaphore.acquire()
                 self.__task_manager.create_task(self.deal_resp(incoming_message))
@@ -95,10 +99,16 @@ class Engine(object):
                 print(incoming_message)
 
     async def consume(self):
-        await self.__scheduler.consumer(self.__channel, queue=self.name, callback=self.deal_resp,
-                                        prefetch=self.__sync)
-        self.__future = asyncio.Future()
-        await self.__future
+        while True:
+            try:
+                await self.__scheduler.consumer(self.__channel, queue=self.name, callback=self.deal_resp,
+                                                prefetch=self.__sync)
+            except ChannelClosed:
+                self.logger.warning('rabbitmq重新连接')
+                self.__connection, self.__channel = await self.__scheduler.connect()
+                continue
+            self.__future = asyncio.Future()
+            await self.__future
 
     async def deal_resp(self, incoming_message):
         ret = pickle.loads(incoming_message.body)
