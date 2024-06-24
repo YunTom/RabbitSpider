@@ -10,7 +10,6 @@ class SetDupeFilter(DupeFilter):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.repeat = set()
-        self.sha1 = hashlib.sha1()
 
     def request_seen(self, request):
         if isinstance(request.data, (dict, list, tuple)):
@@ -27,14 +26,15 @@ class SetDupeFilter(DupeFilter):
         if request.json is not None:
             body = json.dumps(request.json, separators=(",", ":")).encode()
 
+        sha1 = hashlib.sha1()
         if isinstance(request.params, (dict, list, tuple)):
-            self.sha1.update(f'{request.url}?{urlencode(request.params)}'.encode('utf-8'))
+            sha1.update(f'{request.url}?{urlencode(request.params)}'.encode('utf-8'))
         else:
-            self.sha1.update(request.url.encode('utf-8'))
-        self.sha1.update(request.method.encode('utf-8'))
-        self.sha1.update(body)
-        self.sha1.update(str(request.retry).encode('utf-8'))
-        fingerprint = self.sha1.hexdigest()
+            sha1.update(request.url.encode('utf-8'))
+        sha1.update(request.method.encode('utf-8'))
+        sha1.update(body)
+        sha1.update(str(request.retry).encode('utf-8'))
+        fingerprint = sha1.hexdigest()
         data = pickle.dumps(fingerprint)
         if data in self.repeat:
             return False
