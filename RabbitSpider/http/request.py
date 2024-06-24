@@ -11,7 +11,7 @@ class Request(BaseModel):
     data: Union[dict, str, bytes, None] = None
     json: Optional[dict] = None
     method: Optional[str] = 'get'
-    headers: Optional[dict] = {}
+    headers: Optional[dict] = None
     timeout: Optional[int] = None
     cookies: Optional[dict] = None
     proxy: Optional[str] = None
