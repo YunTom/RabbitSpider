@@ -1,5 +1,5 @@
 import warnings
-from typing import Callable, Optional
+from typing import Callable, Optional, Union
 from pydantic import BaseModel, field_validator
 
 warnings.filterwarnings("ignore", category=UserWarning, module="pydantic")
@@ -8,15 +8,15 @@ warnings.filterwarnings("ignore", category=UserWarning, module="pydantic")
 class Request(BaseModel):
     url: Optional[str] = None
     params: Optional[dict] = None
-    data: dict | str | bytes = None
+    data: Union[dict, str, bytes, None] = None
     json: Optional[dict] = None
     method: Optional[str] = 'get'
     headers: Optional[dict] = {}
-    timeout: Optional[int] = 10
+    timeout: Optional[int] = None
     cookies: Optional[dict] = None
     proxy: Optional[str] = None
     allow_redirects: Optional[bool] = True
-    callback: Callable | str = 'parse'
+    callback: Union[Callable, str] = 'parse'
     retry: Optional[int] = 0
     meta: Optional[dict] = {}
 
