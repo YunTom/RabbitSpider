@@ -37,7 +37,7 @@ class BaseItem(MutableMapping, metaclass=ItemMeta):
         if item in field:
             raise
         else:
-            return super(Item, self).__getattribute__(item)
+            return super(BaseItem, self).__getattribute__(item)
 
     def to_dict(self):
         return dict(self)
