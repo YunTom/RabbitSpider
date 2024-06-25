@@ -2,7 +2,7 @@ from collections.abc import MutableMapping
 from RabbitSpider.items import ItemMeta
 
 
-class Item(MutableMapping, metaclass=ItemMeta):
+class BaseItem(MutableMapping, metaclass=ItemMeta):
     FIELDS: dict = {}
 
     def __init__(self):
