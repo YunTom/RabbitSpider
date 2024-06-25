@@ -24,7 +24,7 @@ LOG_FILE = '../rabbit_log'
 # 中间件
 MIDDLEWARES = [
     'RabbitSpider.middlewares.retry.RetryMiddleware',
-    'middlewares.${spider}Middleware'
+    '${project}.middlewares.${spider}Middleware'
 ]
 
 # 管道
