@@ -40,6 +40,6 @@ class CurlDownload(object):
         else:
             raise "{%s}请求方式未定义，请自定义添加！" % request['method']
 
-         if res:
+        if res:
             response = Response(res)
             return response
