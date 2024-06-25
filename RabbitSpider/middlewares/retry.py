@@ -23,5 +23,5 @@ class RetryMiddleware(BaseMiddleware):
                 request.retry += 1
                 return request
             else:
-                spider.logger.warning(f'丢弃{request.model_dump()}，异常：{exc}')
+                spider.logger.warning(f'丢弃{request.model_dump()}，异常：{repr(exc)}')
                 return True
