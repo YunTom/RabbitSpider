@@ -24,11 +24,11 @@ LOG_FILE = '../rabbit_log'
 # 中间件
 MIDDLEWARES = [
     'RabbitSpider.middlewares.retry.RetryMiddleware',
-    '${project}.middlewares.${spider}Middleware'
+    '${project}.middlewares.Middleware'
 ]
 
 # 管道
-ITEM_PIPELINES = ['pipelines.${spider}Pipeline']
+ITEM_PIPELINES = ['pipelines.Pipeline']
 
 # http版本
 HTTP_VERSION = CurlHttpVersion.V1_0
