@@ -18,7 +18,7 @@ class RetryMiddleware(BaseMiddleware):
                 return True
 
     async def process_exception(self, request, exc, spider):
-        if exc.name in self.retry_exceptions:
+        if  exc.__class__.__name__ in self.retry_exceptions:
             if request.retry < self.max_retry:
                 request.retry += 1
                 return request
