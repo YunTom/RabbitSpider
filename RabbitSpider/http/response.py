@@ -5,14 +5,12 @@ from w3lib.encoding import http_content_type_encoding, html_to_unicode
 
 
 class Response:
-    def __init__(self, content=None, status_code=None, charset=None, res=None):
-        self.url = str(res.url)
-        self.body = self.content = content
-        self.status = self.status_code = status_code
-        self.charset = charset
-        self.res = res
-        self.headers = {k: v for k, v in self.res.headers.items()}
-        self.cookies = {k: v for k, v in self.res.cookies.items()}
+    def __init__(self, res):
+        self.body = self.content = res.content
+        self.status = self.status_code = res.status_code
+        self.charset = res.charset
+        self.headers = {k: v for k, v in res.headers.items()}
+        self.cookies = {k: v for k, v in res.cookies.items()}
         self.__r = parsel.Selector(self.text)
 
     def __str__(self):
@@ -27,7 +25,7 @@ class Response:
                 text = self.content.decode(self.charset)
             except UnicodeDecodeError:
                 try:
-                    benc = http_content_type_encoding(dict(self.res.headers)['Content-Type'])
+                    benc = http_content_type_encoding(self.headers['Content-Type'])
                     if benc:
                         charset = 'charset=%s' % benc
                         text = html_to_unicode(charset, self.body)[1]
