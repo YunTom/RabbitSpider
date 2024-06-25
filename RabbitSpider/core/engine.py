@@ -15,7 +15,7 @@ from RabbitSpider.utils.control import MiddlewareManager
 from RabbitSpider.utils.control import FilterManager
 from RabbitSpider.utils.exceptions import RabbitExpect
 from RabbitSpider.utils.log import Logger
-from RabbitSpider.items.item import Item
+from RabbitSpider.items.item import BaseItem
 from RabbitSpider.core.scheduler import Scheduler
 from aio_pika.exceptions import QueueEmpty, ChannelClosed, ChannelNotFoundEntity
 
@@ -52,7 +52,7 @@ class Engine(object):
                 if self.__filter.request_seen(res):
                     self.logger.info(f'生产数据：{res.model_dump()}')
                     await self.__scheduler.producer(self.__channel, queue=self.name, body=res.model_dump())
-            elif isinstance(res, Item):
+            elif isinstance(res, BaseItem):
                 await self.__pipelines.process_item(res)
 
         if isinstance(result, AsyncGenerator):
