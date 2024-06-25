@@ -92,12 +92,9 @@ class Engine(object):
                 self.logger.warning('rabbitmq重新连接')
                 self.__connection, self.__channel = await self.__scheduler.connect()
                 continue
-            if incoming_message:
-                await self.__task_manager.semaphore.acquire()
-                self.__task_manager.create_task(self.deal_resp(incoming_message))
-            else:
-                print(incoming_message)
-
+            await self.__task_manager.semaphore.acquire()
+            self.__task_manager.create_task(self.deal_resp(incoming_message))
+            
     async def consume(self):
         while True:
             try:
