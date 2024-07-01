@@ -36,7 +36,7 @@ class Scheduler(object):
                                             arguments={"x-max-priority": 10})
         if callback:
             await channel.set_qos(prefetch_count=prefetch)
-            await queue.consume(callback=partial(callback, future))
+            await queue.consume(callback=lambda message: callback(message, future))
         else:
             return await queue.get()
 
