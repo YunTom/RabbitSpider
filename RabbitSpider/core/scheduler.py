@@ -1,4 +1,5 @@
 import pickle
+from functools import partial
 from typing import Callable, Optional
 from aio_pika import connect_robust, Message
 
@@ -30,12 +31,12 @@ class Scheduler(object):
             Message(body=ret, delivery_mode=2, priority=body['retry']), routing_key=queue)
 
     @staticmethod
-    async def consumer(channel, queue: str, callback: Optional[Callable] = None, prefetch: int = 1):
+    async def consumer(channel, queue: str, callback: Optional[Callable] = None, future=None, prefetch: int = 1):
         queue = await channel.declare_queue(name=queue, durable=True, passive=True,
                                             arguments={"x-max-priority": 10})
         if callback:
             await channel.set_qos(prefetch_count=prefetch)
-            await queue.consume(callback=callback)
+            await queue.consume(callback=partial(callback, future))
         else:
             return await queue.get()
 
