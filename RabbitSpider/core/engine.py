@@ -77,7 +77,7 @@ class Engine(object):
         while True:
             try:
                 incoming_message: IncomingMessage = await self.__scheduler.consumer(self.__channel,
-                                                                                              queue=self.name)
+                                                                                    queue=self.name)
             except QueueEmpty:
                 if self.__task_manager.all_done():
                     await self.__scheduler.delete_queue(self.__channel, self.name)

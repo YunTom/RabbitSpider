@@ -1,5 +1,4 @@
 import pickle
-from functools import partial
 from typing import Callable, Optional
 from aio_pika import connect_robust, Message
 
