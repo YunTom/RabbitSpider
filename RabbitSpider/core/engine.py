@@ -1,11 +1,10 @@
-import asyncio
 import os
 import sys
 import pickle
-from collections.abc import AsyncGenerator, Coroutine, Generator
-from traceback import print_exc
+import asyncio
 from typing import Optional
-from aio_pika.abc import AbstractIncomingMessage
+from traceback import print_exc
+from aio_pika import IncomingMessage
 from RabbitSpider.http.request import Request
 from RabbitSpider.http.response import Response
 from RabbitSpider.utils.control import TaskManager
@@ -17,6 +16,7 @@ from RabbitSpider.utils.exceptions import RabbitExpect
 from RabbitSpider.utils.log import Logger
 from RabbitSpider.items.item import BaseItem
 from RabbitSpider.core.scheduler import Scheduler
+from collections.abc import AsyncGenerator, Coroutine, Generator
 from aio_pika.exceptions import QueueEmpty, ChannelClosed, ChannelNotFoundEntity
 
 
@@ -26,7 +26,6 @@ class Engine(object):
 
     def __init__(self, sync):
         self.session = None
-        self.__future = None
         self.__connection = None
         self.__channel = None
         self.__sync = sync
@@ -78,8 +77,8 @@ class Engine(object):
     async def crawl(self):
         while True:
             try:
-                incoming_message: Optional[AbstractIncomingMessage] = await self.__scheduler.consumer(self.__channel,
-                                                                                                      queue=self.name)
+                incoming_message: Optional[IncomingMessage] = await self.__scheduler.consumer(self.__channel,
+                                                                                              queue=self.name)
             except QueueEmpty:
                 if self.__task_manager.all_done():
                     await self.__scheduler.delete_queue(self.__channel, self.name)
@@ -94,20 +93,20 @@ class Engine(object):
                 continue
             await self.__task_manager.semaphore.acquire()
             self.__task_manager.create_task(self.deal_resp(incoming_message))
-            
+
     async def consume(self):
         while True:
             try:
-                await self.__scheduler.consumer(self.__channel, queue=self.name, callback=self.deal_resp,
+                future = asyncio.Future()
+                await self.__scheduler.consumer(self.__channel, queue=self.name, callback=self.deal_resp, future=future,
                                                 prefetch=self.__sync)
             except ChannelClosed:
                 self.logger.warning('rabbitmq重新连接')
                 self.__connection, self.__channel = await self.__scheduler.connect()
                 continue
-            self.__future = asyncio.Future()
-            await self.__future
+            await future
 
-    async def deal_resp(self, incoming_message):
+    async def deal_resp(self, incoming_message, future=None):
         ret = pickle.loads(incoming_message.body)
         self.logger.info(f'消费数据：{ret}')
         response = await self.__middlewares.downloader(Request(**ret))
@@ -125,7 +124,7 @@ class Engine(object):
         try:
             await self.__channel.declare_queue(name=self.name, passive=True)
         except Exception:
-            self.__future.set_result('done') if self.__future else None
+            future.set_result('done') if future else None
             self.logger.info(f'队列{self.name}已删除！')
         else:
             await incoming_message.ack()
