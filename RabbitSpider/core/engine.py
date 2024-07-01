@@ -2,7 +2,6 @@ import os
 import sys
 import pickle
 import asyncio
-from typing import Optional
 from traceback import print_exc
 from aio_pika import IncomingMessage
 from RabbitSpider.http.request import Request
@@ -77,7 +76,7 @@ class Engine(object):
     async def crawl(self):
         while True:
             try:
-                incoming_message: Optional[IncomingMessage] = await self.__scheduler.consumer(self.__channel,
+                incoming_message: IncomingMessage = await self.__scheduler.consumer(self.__channel,
                                                                                               queue=self.name)
             except QueueEmpty:
                 if self.__task_manager.all_done():
