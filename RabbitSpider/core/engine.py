@@ -105,7 +105,7 @@ class Engine(object):
                 continue
             await future
 
-    async def deal_resp(self, incoming_message, future=None):
+    async def deal_resp(self, incoming_message: IncomingMessage, future=None):
         ret = pickle.loads(incoming_message.body)
         self.logger.info(f'消费数据：{ret}')
         response = await self.__middlewares.downloader(Request(**ret))
