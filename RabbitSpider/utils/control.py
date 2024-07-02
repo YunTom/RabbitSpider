@@ -190,7 +190,7 @@ class FilterManager(object):
 
     def request_seen(self, request: Request) -> bool:
         if self.filter_obj:
-            result = self.filter_obj.request_seen(request)
+            result = self.filter_obj.request_fingerprint(request)
             return result
         else:
             return True
