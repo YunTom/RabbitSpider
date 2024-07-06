@@ -23,16 +23,16 @@ class Engine(object):
     name = os.path.basename(sys.argv[0])
     custom_settings = {}
 
-    def __init__(self, sync):
+    def __init__(self, task_count):
         self.session = None
         self.__connection = None
         self.__channel = None
-        self.__sync = sync
+        self.__task_count = task_count
         self.settings = SettingManager(self.custom_settings)
         self.__scheduler = Scheduler(self.settings)
         self.__filter = FilterManager(self.settings)
         self.logger = Logger(self.settings, self.name).logger
-        self.__task_manager = TaskManager(self.__sync)
+        self.__task_manager = TaskManager(self.__task_count)
         self.__middlewares = MiddlewareManager.create_instance(self)
         self.__pipelines = PipelineManager.create_instance(self)
 
@@ -98,7 +98,7 @@ class Engine(object):
             try:
                 future = asyncio.Future()
                 await self.__scheduler.consumer(self.__channel, queue=self.name, callback=self.deal_resp, future=future,
-                                                prefetch=self.__sync)
+                                                prefetch=self.__task_count)
             except ChannelClosed:
                 self.logger.warning('rabbitmq重新连接')
                 self.__connection, self.__channel = await self.__scheduler.connect()

@@ -15,7 +15,7 @@ RABBIT_VIRTUAL_HOST = '/'
 # REDIS_DB = 1
 
 # set 去重
-DUPEFILTER_CLASS = 'RabbitSpider.dupefilters.setdupefilter.SetDupeFilter'
+DUPEFILTER_CLASS = 'RabbitSpider.dupefilters.memorydupefilter.MemoryDupeFilter'
 
 # 日志
 LOG_LEVEL = 'ERROR'
