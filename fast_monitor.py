@@ -10,7 +10,11 @@ from fastapi.encoders import jsonable_encoder
 from sqlalchemy.orm.session import sessionmaker
 from sqlalchemy import create_engine, Table, MetaData, select, update, insert, delete
 
-settings = SettingManager({})
+settings = SettingManager({'RABBIT_HOST': '127.0.0.1',
+                           'RABBIT_PORT': 5672,
+                           'RABBIT_USERNAME': 'yuntom',
+                           'RABBIT_PASSWORD': '123456',
+                           'RABBIT_VIRTUAL_HOST': '/'})
 
 scheduler = Scheduler(settings)
 
@@ -49,13 +53,30 @@ app.add_middleware(
 async def get_task():
     resp = []
     connection, channel = await scheduler.connect()
-    stmt = select(table).where(table.columns.next_time.is_(None))
+    stmt = select(table).where(table.columns.next_time.is_(None), table.columns.stop_time.is_(None))
     results = session.execute(stmt)
     session.commit()
     for result in results:
         item = TaskData.model_validate(result).model_dump()
         item['total'] = await scheduler.get_message_count(channel, item['name'])
         resp.append(item)
+    resp.append({'length': len(resp)})
+    await connection.close(), await channel.close()
+    return resp
+
+
+@app.get('/get/danger')
+async def get_danger():
+    resp = []
+    connection, channel = await scheduler.connect()
+    stmt = select(table).where(table.columns.stop_time.isnot(None))
+    results = session.execute(stmt)
+    session.commit()
+    for result in results:
+        item = TaskData.model_validate(result).model_dump()
+        item['total'] = await scheduler.get_message_count(channel, item['name'])
+        resp.append(item)
+    resp.append({'length': len(resp)})
     await connection.close(), await channel.close()
     return resp
 

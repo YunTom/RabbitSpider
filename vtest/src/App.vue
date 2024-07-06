@@ -11,7 +11,7 @@
           <el-icon :size="30" style="width: 30px;">
             <sunny color="#ffcc33"></sunny>
           </el-icon>
-          <el-badge :value="34" type="primary">
+          <el-badge :value="success_totals" type="primary">
             <span slot="title" style="font-size: 15px">运行中任务</span>
           </el-badge>
         </el-menu-item>
@@ -19,7 +19,7 @@
           <el-icon :size="30" style="width: 30px;">
             <moon-night color="#6699ff"></moon-night>
           </el-icon>
-          <el-badge :value="34" type="success">
+          <el-badge :value="info_totals" type="success">
             <span slot="title" style="font-size: 15px">休眠任务</span>
           </el-badge>
         </el-menu-item>
@@ -27,7 +27,7 @@
           <el-icon :size="30">
             <cloudy color="#6666cc"></cloudy>
           </el-icon>
-          <el-badge :value="34">
+          <el-badge :value="danger_totals">
             <span slot="title" style="font-size: 15px;">异常任务</span>
           </el-badge>
         </el-menu-item>
@@ -47,7 +47,7 @@
           <el-table-column prop="sync" label="并发数" width="200"/>
           <el-table-column prop="total" label="任务数量" width="200"/>
           <el-table-column prop="status" label="任务状态" width="200">
-            <el-tag :type="'success'">'运行中'</el-tag>
+            <el-tag :type="'success'">运行中</el-tag>
           </el-table-column>
           <el-table-column prop="wait" label="运行时长" width="200"/>
           <el-table-column width="200" label="操作">
@@ -58,12 +58,12 @@
         </el-table>
       </div>
       <div v-else-if="block===2">
-        <el-table ref="tableRef" row-key="name" :data="tableData" style="width: 100%" stripe="true" border>
+        <el-table ref="tableRef" row-key="name" :data="nextData" style="width: 100%" stripe="true" border>
           <el-table-column prop="name" label="任务名称" width="200"/>
           <el-table-column prop="ip_address" label="服务器地址" width="200"/>
           <el-table-column prop="sync" label="并发数" width="200"/>
           <el-table-column prop="status" label="任务状态" width="200">
-            <el-tag :type="'info'">'休眠中'</el-tag>
+            <el-tag :type="'info'">休眠中</el-tag>
           </el-table-column>
           <el-table-column prop="next_time" label="下次运行" width="200"/>
           <el-table-column width="200" label="操作">
@@ -74,15 +74,15 @@
         </el-table>
       </div>
       <div v-else-if="block===3">
-        <el-table ref="tableRef" row-key="name" :data="tableData" style="width: 100%" stripe="true" border>
+        <el-table ref="tableRef" row-key="name" :data="stopData" style="width: 100%" stripe="true" border>
           <el-table-column prop="name" label="任务名称" width="200"/>
           <el-table-column prop="ip_address" label="服务器地址" width="200"/>
           <el-table-column prop="sync" label="并发数" width="200"/>
           <el-table-column prop="total" label="任务数量" width="200"/>
           <el-table-column prop="status" label="任务状态" width="200">
-            <el-tag :type="'danger'">'停止'</el-tag>
+            <el-tag :type="'danger'">停止</el-tag>
           </el-table-column>
-          <el-table-column prop="wait" label="运行时长" width="200"/>
+          <el-table-column prop="stop_time" label="停止时间" width="200"/>
           <el-table-column width="200" label="操作">
             <template #default="scope">
               <el-button type="danger" :icon="Delete" circle @click="del_msg(scope)"/>
@@ -137,7 +137,11 @@ import {ref} from 'vue'
 
 const tableData = ref([]);
 const nextData = ref([]);
+const stopData = ref([]);
 const block = ref(1);
+const success_totals = ref(0);
+const info_totals = ref(0);
+const danger_totals = ref(0);
 const sizeForm = ref({name: '', model: '', sync: '', wait: '', ip: ''})
 
 
@@ -147,7 +151,7 @@ const select_block = (key) => {
 
 
 const del_task = (scope) => {
-  axios.post('/delete/queue', {'name': scope.row.name}).then(response => {
+  axios.post('http://127.0.0.1:8000/delete/queue', {'name': scope.row.name}).then(response => {
         tableData.value.splice(scope.$index, 1)
       }
   ).catch(response => {
@@ -179,13 +183,21 @@ const del_msg = (scope) => {
 }
 
 
-// setInterval(function () {
-//   axios.get('http://127.0.0.1:8000/get/task').then(response => {
-//     tableData.value = response.data
-//   }), axios.get('http://127.0.0.1:8000/get/done').then(response => {
-//     nextData.value = response.data
-//   })
-// }, 5000)
+setInterval(function () {
+  axios.get('http://127.0.0.1:8000/get/task').then(response => {
+    success_totals.value = response.data.pop()['length']
+    tableData.value = response.data
+  })
+  axios.get('http://127.0.0.1:8000/get/done').then(response => {
+    info_totals.value = response.data.pop()['length']
+    nextData.value = response.data
+  })
+  axios.get('http://127.0.0.1:8000/get/danger').then(response => {
+    danger_totals.value = response.data.pop()['length']
+    stopData.value = response.data
+  })
+
+}, 5000)
 
 
 </script>
