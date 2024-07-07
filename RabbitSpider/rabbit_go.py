@@ -18,22 +18,20 @@ def main(spider, mode, task_count, sleep):
 
     def signal_handler(sig, frame):
         requests.post('http://127.0.0.1:8000/post/task',
-                      json={'name': rabbit.name, 'status': 0,
-                            'stop_time': datetime.now().strftime('%Y-%m-%d %H:%M:%S'), 'pid': os.getpid()})
+                      json={'status': 0, 'stop_time': datetime.now().strftime('%Y-%m-%d %H:%M:%S'), 'pid': os.getpid()})
 
     signal(SIGINT, signal_handler)
     signal(SIGTERM, signal_handler)
     try:
         requests.post('http://127.0.0.1:8000/post/task',
                       json={'name': rabbit.name, 'ip_address': f'{socket.gethostbyname(socket.gethostname())}',
-                            'task_count': task_count, 'status': 1, 'pid': os.getpid(), 'mode': mode,
+                            'task_count': task_count, 'status': 1, 'pid': os.getpid(), 'mode': mode, 'sleep': sleep,
                             'create_time': datetime.now().strftime('%Y-%m-%d %H:%M:%S')})
         loop = asyncio.get_event_loop()
         loop.run_until_complete(rabbit.run(mode))
         if sleep:
             requests.post('http://127.0.0.1:8000/post/task',
-                          json={'name': rabbit.name,
-                                'pid': os.getpid(),
+                          json={'pid': os.getpid(),
                                 'next_time': (datetime.now() + timedelta(minutes=sleep)).strftime('%Y-%m-%d %H:%M:%S')})
         elif mode != 'm':
             requests.post('http://127.0.0.1:8000/delete/queue', json={'pid': os.getpid()})
