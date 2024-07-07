@@ -10,7 +10,7 @@ from RabbitSpider.core.scheduler import Scheduler
 from RabbitSpider.utils.control import SettingManager
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy.orm.session import sessionmaker
-from sqlalchemy import create_engine, Table, MetaData, select, update, insert, delete
+from sqlalchemy import create_engine, Table, MetaData, select, update, insert, delete, func
 
 settings = SettingManager({'RABBIT_HOST': '127.0.0.1',
                            'RABBIT_PORT': 5672,
@@ -79,7 +79,6 @@ async def get_task():
         except Exception:
             item['total'] = 0
         resp.append(item)
-    resp.append({'length': len(resp)})
     await connection.close(), await channel.close()
     return resp
 
@@ -96,7 +95,6 @@ async def get_danger():
         item = TaskData.model_validate(result).model_dump()
         item['total'] = await scheduler.get_message_count(channel, item['name'])
         resp.append(item)
-    resp.append({'length': len(resp)})
     await connection.close(), await channel.close()
     return resp
 
@@ -109,6 +107,27 @@ async def get_done():
     session.commit()
     resp = jsonable_encoder([TaskData.model_validate(result).model_dump() for result in results])
     resp.append({'length': len(resp)})
+    return resp
+
+
+@app.get('/get/count')
+async def get_count():
+    resp = {}
+    stmt = select(func.count(table.columns.pid)).where(table.columns.next_time.is_(None),
+                                                       table.columns.stop_time.is_(None))
+    results = session.execute(stmt)
+    session.commit()
+    resp['success_totals'] = results.scalar()
+
+    stmt = select(func.count(table.columns.pid)).where(table.columns.stop_time.isnot(None))
+    results = session.execute(stmt)
+    session.commit()
+    resp['danger_totals'] = results.scalar()
+
+    stmt = select(func.count(table.columns.pid)).where(table.columns.next_time.isnot(None))
+    results = session.execute(stmt)
+    session.commit()
+    resp['info_totals'] = results.scalar()
     return resp
 
 

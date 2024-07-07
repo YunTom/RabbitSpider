@@ -160,7 +160,7 @@ const onSubmit = () => {
     'mode': sizeForm.value.mode,
     'task_count': sizeForm.value.task_count,
     'sleep': sizeForm.value.sleep,
-    'dir':sizeForm.value.dir
+    'dir': sizeForm.value.dir
   }).then(response => {
         ElMessage({
           type: 'success',
@@ -211,17 +211,23 @@ const del_msg = (scope) => {
 
 
 setInterval(function () {
-  axios.get('http://127.0.0.1:8000/get/task').then(response => {
-    success_totals.value = response.data.pop()['length']
-    tableData.value = response.data
-  })
-  axios.get('http://127.0.0.1:8000/get/done').then(response => {
-    info_totals.value = response.data.pop()['length']
-    nextData.value = response.data
-  })
-  axios.get('http://127.0.0.1:8000/get/danger').then(response => {
-    danger_totals.value = response.data.pop()['length']
-    stopData.value = response.data
+  if (block.value === 1) {
+    axios.get('http://127.0.0.1:8000/get/task').then(response => {
+      tableData.value = response.data
+    })
+  } else if (block.value === 2) {
+    axios.get('http://127.0.0.1:8000/get/done').then(response => {
+      nextData.value = response.data
+    })
+  } else if (block.value === 3) {
+    axios.get('http://127.0.0.1:8000/get/danger').then(response => {
+      stopData.value = response.data
+    })
+  }
+  axios.get('http://127.0.0.1:8000/get/count').then(response => {
+    success_totals.value = response.data['success_totals']
+    info_totals.value = response.data['info_totals']
+    danger_totals.value = response.data['danger_totals']
   })
 
 }, 5000)
