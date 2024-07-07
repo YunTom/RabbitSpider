@@ -10,7 +10,7 @@ from RabbitSpider.core.scheduler import Scheduler
 from RabbitSpider.utils.control import SettingManager
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy.orm.session import sessionmaker
-from sqlalchemy import create_engine, Table, MetaData, select, update, insert, delete, and_
+from sqlalchemy import create_engine, Table, MetaData, select, update, insert, delete
 
 settings = SettingManager({'RABBIT_HOST': '127.0.0.1',
                            'RABBIT_PORT': 5672,
@@ -136,11 +136,11 @@ async def create_task(item: CreateData):
     if result or item.name not in os.listdir(item.dir):
         return Response(status_code=status.HTTP_410_GONE)
     if sys.platform == 'win32':
-        sp = subprocess.Popen(
+        subprocess.Popen(
             args=['python', item.name, f'mode={item.mode}', f'task_count={item.task_count}', f'sleep={item.sleep}'],
             cwd=rf'{item.dir}', shell=True)
     else:
-        sp = subprocess.Popen(
+        subprocess.Popen(
             args=['python3', item.name, f'mode={item.mode}', f'task_count={item.task_count}', f'sleep={item.sleep}'],
             cwd=rf'{item.dir}', shell=True)
 

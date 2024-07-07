@@ -31,11 +31,11 @@
             <span slot="title" style="font-size: 15px;">异常任务</span>
           </el-badge>
         </el-menu-item>
-        <el-menu-item index="4" style="height: 80px">
+        <el-menu-item index="4" style="height: 80px" @click="select_block(4)">
           <el-icon :size="30" style="width: 30px;">
             <sunrise color="#ffcc99"></sunrise>
           </el-icon>
-          <span slot="title" style="font-size: 15px;" @click="select_block(4)">添加任务</span>
+          <span slot="title" style="font-size: 15px;">添加任务</span>
         </el-menu-item>
       </el-menu>
     </el-aside>
