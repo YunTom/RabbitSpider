@@ -71,7 +71,6 @@ class Engine(object):
             raise RabbitExpect('回调函数返回类型错误！')
 
     async def produce(self):
-        await self.__scheduler.create_queue(self.__channel, self.name)
         await self.routing(self.start_requests())
 
     async def crawl(self):
@@ -130,6 +129,7 @@ class Engine(object):
         self.__connection, self.__channel = await self.__scheduler.connect()
         self.session = await self.__middlewares.download.new_session()
         await self.__pipelines.open_spider()
+        await self.__scheduler.create_queue(self.__channel, self.name)
         if mode == 'auto':
             await self.produce()
             await self.crawl()
