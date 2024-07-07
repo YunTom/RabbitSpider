@@ -2,6 +2,7 @@ import os
 import sys
 import pickle
 import asyncio
+import time
 from traceback import print_exc
 from aio_pika import IncomingMessage
 from RabbitSpider.http.request import Request
@@ -87,6 +88,7 @@ class Engine(object):
             except ChannelNotFoundEntity:
                 break
             except ChannelClosed:
+                time.sleep(1)
                 self.logger.warning('rabbitmq重新连接')
                 self.__connection, self.__channel = await self.__scheduler.connect()
                 continue
@@ -94,12 +96,13 @@ class Engine(object):
             self.__task_manager.create_task(self.deal_resp(incoming_message))
 
     async def consume(self):
-        while True:
+        for i in range(10):
             try:
                 future = asyncio.Future()
                 await self.__scheduler.consumer(self.__channel, queue=self.name, callback=self.deal_resp, future=future,
                                                 prefetch=self.__task_count)
             except ChannelClosed:
+                await asyncio.sleep(1)
                 self.logger.warning('rabbitmq重新连接')
                 self.__connection, self.__channel = await self.__scheduler.connect()
                 continue
@@ -120,12 +123,6 @@ class Engine(object):
                 print_exc()
                 for task in asyncio.all_tasks():
                     task.cancel()
-        try:
-            await self.__channel.declare_queue(name=self.name, passive=True)
-        except Exception:
-            future.set_result('done') if future else None
-            self.logger.info(f'队列{self.name}已删除！')
-        else:
             await incoming_message.ack()
 
     async def run(self, mode):

@@ -1,5 +1,7 @@
 import sys
+import os
 import asyncio
+import time
 import requests
 import socket
 from datetime import datetime, timedelta
@@ -7,7 +9,7 @@ from traceback import print_exc
 from signal import signal, SIGINT, SIGTERM
 
 
-async def main(spider, mode, task_count, timer):
+def main(spider, mode, task_count, sleep):
     try:
         rabbit = spider(task_count)
     except Exception:
@@ -17,35 +19,39 @@ async def main(spider, mode, task_count, timer):
     def signal_handler(sig, frame):
         requests.post('http://127.0.0.1:8000/post/task',
                       json={'name': rabbit.name, 'status': 0,
-                            'stop_time': datetime.now().strftime('%Y-%m-%d %H:%M:%S')})
+                            'stop_time': datetime.now().strftime('%Y-%m-%d %H:%M:%S'), 'pid': os.getpid()})
 
     signal(SIGINT, signal_handler)
     signal(SIGTERM, signal_handler)
     try:
         requests.post('http://127.0.0.1:8000/post/task',
                       json={'name': rabbit.name, 'ip_address': f'{socket.gethostbyname(socket.gethostname())}',
-                            'sync': task_count, 'status': 1})
-        await rabbit.run(mode)
-        if timer:
+                            'task_count': task_count, 'status': 1, 'pid': os.getpid(), 'mode': mode,
+                            'create_time': datetime.now().strftime('%Y-%m-%d %H:%M:%S')})
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(rabbit.run(mode))
+        if sleep:
             requests.post('http://127.0.0.1:8000/post/task',
                           json={'name': rabbit.name,
-                                'sleep': timer,
-                                'next_time': (datetime.now() + timedelta(minutes=timer)).strftime('%Y-%m-%d %H:%M:%S')})
-        elif mode == 'auto':
-            requests.post('http://127.0.0.1:8000/delete/queue', json={'name': rabbit.name})
+                                'pid': os.getpid(),
+                                'next_time': (datetime.now() + timedelta(minutes=sleep)).strftime('%Y-%m-%d %H:%M:%S')})
+        elif mode != 'm':
+            requests.post('http://127.0.0.1:8000/delete/queue', json={'pid': os.getpid()})
     except Exception:
         print_exc()
 
 
-async def go(spider, mode: str = 'auto', task_count: int = 1, timer=0):
+def go(spider, mode: str = 'auto', task_count: int = 1, sleep=0):
     for i in sys.argv[1:]:
         key, value = i.split('=')
         if key == 'mode':
             mode = value
         if key == 'task_count':
-            task_count = value
-    while timer:
-        await main(spider, mode=mode, task_count=task_count, timer=timer)
-        await asyncio.sleep(timer * 60)
+            task_count = int(value)
+        if key == 'sleep':
+            sleep = int(value)
+    while sleep:
+        main(spider, mode=mode, task_count=task_count, sleep=sleep)
+        time.sleep(sleep * 60)
     else:
-        await main(spider, mode=mode, task_count=task_count, timer=timer)
+        main(spider, mode=mode, task_count=task_count, sleep=sleep)

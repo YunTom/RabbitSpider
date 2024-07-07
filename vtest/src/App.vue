@@ -44,12 +44,12 @@
         <el-table ref="tableRef" row-key="name" :data="tableData" style="width: 100%" stripe="true" border>
           <el-table-column prop="name" label="任务名称" width="200"/>
           <el-table-column prop="ip_address" label="服务器地址" width="200"/>
-          <el-table-column prop="sync" label="并发数" width="200"/>
+          <el-table-column prop="task_count" label="并发数" width="200"/>
           <el-table-column prop="total" label="任务数量" width="200"/>
           <el-table-column prop="status" label="任务状态" width="200">
             <el-tag :type="'success'">运行中</el-tag>
           </el-table-column>
-          <el-table-column prop="wait" label="运行时长" width="200"/>
+          <el-table-column prop="create_time" label="创建时间" width="200"/>
           <el-table-column width="200" label="操作">
             <template #default="scope">
               <el-button type="danger" :icon="Delete" circle @click="del_msg(scope)"/>
@@ -61,7 +61,7 @@
         <el-table ref="tableRef" row-key="name" :data="nextData" style="width: 100%" stripe="true" border>
           <el-table-column prop="name" label="任务名称" width="200"/>
           <el-table-column prop="ip_address" label="服务器地址" width="200"/>
-          <el-table-column prop="sync" label="并发数" width="200"/>
+          <el-table-column prop="task_count" label="并发数" width="200"/>
           <el-table-column prop="status" label="任务状态" width="200">
             <el-tag :type="'info'">休眠中</el-tag>
           </el-table-column>
@@ -77,7 +77,7 @@
         <el-table ref="tableRef" row-key="name" :data="stopData" style="width: 100%" stripe="true" border>
           <el-table-column prop="name" label="任务名称" width="200"/>
           <el-table-column prop="ip_address" label="服务器地址" width="200"/>
-          <el-table-column prop="sync" label="并发数" width="200"/>
+          <el-table-column prop="task_count" label="并发数" width="200"/>
           <el-table-column prop="total" label="任务数量" width="200"/>
           <el-table-column prop="status" label="任务状态" width="200">
             <el-tag :type="'danger'">停止</el-tag>
@@ -96,22 +96,27 @@
             <el-input v-model="sizeForm.name" size="large"></el-input>
           </el-form-item>
           <el-form-item label="运行模式">
-            <el-radio-group v-model="sizeForm.model">
+            <el-radio-group v-model="sizeForm.mode">
               <el-radio label="auto"></el-radio>
               <el-radio label="m"></el-radio>
               <el-radio label="w"></el-radio>
             </el-radio-group>
           </el-form-item>
           <el-form-item label="协程数">
-            <el-input-number v-model="sizeForm.sync" @change="handleChange" :min="1" :max="10"
+            <el-input-number v-model="sizeForm.task_count" @change="handleChange" :min="1" :max="20"
                              label="描述文字"></el-input-number>
           </el-form-item>
           <el-form-item label="定时任务/分钟">
-            <el-input v-model="sizeForm.wait" size="large"></el-input>
+            <el-input v-model="sizeForm.sleep" size="large"></el-input>
           </el-form-item>
           <el-form-item label="服务器ip">
-            <el-select v-model="sizeForm.ip" size="large">
+            <el-select v-model="sizeForm.ip_address" size="large">
               <el-option label="127.0.0.1" value="127.0.0.1"></el-option>
+            </el-select>
+          </el-form-item>
+          <el-form-item label="工作目录">
+            <el-select v-model="sizeForm.dir" size="large">
+              <el-option label="emmo" value="D:\pycode\RabbitSpider\emmo\spiders"></el-option>
             </el-select>
           </el-form-item>
           <el-form-item size="large">
@@ -142,16 +147,38 @@ const block = ref(1);
 const success_totals = ref(0);
 const info_totals = ref(0);
 const danger_totals = ref(0);
-const sizeForm = ref({name: '', model: '', sync: '', wait: '', ip: ''})
+const sizeForm = ref({name: '', mode: '', task_count: 1, sleep: 0, ip_address: '', dir: ''})
 
 
 const select_block = (key) => {
   block.value = key
 }
 
+const onSubmit = () => {
+  axios.post(`http://${sizeForm.value.ip_address}:8000/create/task`, {
+    'name': sizeForm.value.name,
+    'mode': sizeForm.value.mode,
+    'task_count': sizeForm.value.task_count,
+    'sleep': sizeForm.value.sleep,
+    'dir':sizeForm.value.dir
+  }).then(response => {
+        ElMessage({
+          type: 'success',
+          message: `Create ${sizeForm.value.name} success`,
+        })
+      }
+  ).catch(response => {
+    ElMessage({
+      type: 'warning',
+      message: `${sizeForm.value.name}失败！`,
+    })
+  })
+
+}
+
 
 const del_task = (scope) => {
-  axios.post('http://127.0.0.1:8000/delete/queue', {'name': scope.row.name}).then(response => {
+  axios.post('http://127.0.0.1:8000/delete/queue', {'pid': scope.row.pid}).then(response => {
         tableData.value.splice(scope.$index, 1)
       }
   ).catch(response => {
@@ -162,7 +189,7 @@ const del_task = (scope) => {
 
 const del_msg = (scope) => {
   ElMessageBox.confirm(
-      `确定删除队列${scope.row.name}？`,
+      `确定删除任务${scope.row.name}？`,
       {
         confirmButtonText: 'OK',
         cancelButtonText: 'Cancel',
