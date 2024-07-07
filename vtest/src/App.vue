@@ -20,7 +20,7 @@
             <moon-night color="#6699ff"></moon-night>
           </el-icon>
           <el-badge :value="info_totals" type="success">
-            <span slot="title" style="font-size: 15px">休眠任务</span>
+            <span slot="title" style="font-size: 15px">休眠中任务</span>
           </el-badge>
         </el-menu-item>
         <el-menu-item index="3" style="height: 80px" @click="select_block(3)">
