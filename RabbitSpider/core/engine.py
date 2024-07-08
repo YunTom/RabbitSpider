@@ -2,7 +2,6 @@ import os
 import sys
 import pickle
 import asyncio
-import time
 from traceback import print_exc
 from aio_pika import IncomingMessage
 from RabbitSpider.http.request import Request
