@@ -87,7 +87,7 @@ class Engine(object):
             except ChannelNotFoundEntity:
                 break
             except ChannelClosed:
-                time.sleep(1)
+                await asyncio.sleep(1)
                 self.logger.warning('rabbitmq重新连接')
                 self.__connection, self.__channel = await self.__scheduler.connect()
                 continue
