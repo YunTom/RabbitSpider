@@ -30,12 +30,12 @@ class Scheduler(object):
             Message(body=ret, delivery_mode=2, priority=body['retry']), routing_key=queue)
 
     @staticmethod
-    async def consumer(channel, queue: str, callback: Optional[Callable] = None, future=None, prefetch: int = 1):
+    async def consumer(channel, queue: str, callback: Optional[Callable] = None, prefetch: int = 1):
         queue = await channel.declare_queue(name=queue, durable=True, passive=True,
                                             arguments={"x-max-priority": 10})
         if callback:
             await channel.set_qos(prefetch_count=prefetch)
-            await queue.consume(callback=lambda message: callback(message, future))
+            await queue.consume(callback=callback)
         else:
             return await queue.get()
 
