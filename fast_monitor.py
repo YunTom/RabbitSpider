@@ -36,8 +36,10 @@ class TaskData(BaseModel):
     create_time: Optional[datetime] = None
     stop_time: Optional[datetime] = None
     next_time: Optional[datetime] = None
+    sleep: Optional[int] = None
     pid: Optional[int] = None,
     mode: Optional[str] = None
+    dir: Optional[str] = None
 
     class Config:
         from_attributes = True

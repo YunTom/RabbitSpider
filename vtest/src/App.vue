@@ -47,11 +47,15 @@
           <el-table-column prop="task_count" label="并发数" width="200"/>
           <el-table-column prop="total" label="任务数量" width="200"/>
           <el-table-column prop="status" label="任务状态" width="200">
-            <el-tag :type="'success'">运行中</el-tag>
+            <template #default="scope">
+              <el-tag :type="'success'">运行中</el-tag>&nbsp;&nbsp;
+              <el-tag>{{ scope.row.mode }}</el-tag>
+            </template>
           </el-table-column>
           <el-table-column prop="create_time" label="创建时间" width="200"/>
           <el-table-column width="200" label="操作">
             <template #default="scope">
+              <el-button type="primary" :icon="Refresh" circle @click="refresh(scope)"/>
               <el-button type="danger" :icon="Delete" circle @click="del_msg(scope)"/>
             </template>
           </el-table-column>
@@ -68,6 +72,7 @@
           <el-table-column prop="next_time" label="下次运行" width="200"/>
           <el-table-column width="200" label="操作">
             <template #default="scope">
+              <el-button type="primary" :icon="Refresh" circle @click="refresh(scope)"/>
               <el-button type="danger" :icon="Delete" circle @click="del_msg(scope)"/>
             </template>
           </el-table-column>
@@ -85,6 +90,7 @@
           <el-table-column prop="stop_time" label="停止时间" width="200"/>
           <el-table-column width="200" label="操作">
             <template #default="scope">
+              <el-button type="primary" :icon="Refresh" circle @click="refresh(scope)"/>
               <el-button type="danger" :icon="Delete" circle @click="del_msg(scope)"/>
             </template>
           </el-table-column>
@@ -132,7 +138,7 @@
 
 <script lang="ts" setup>
 import {
-  Delete, Sunny, Sunrise, MoonNight, Cloudy
+  Delete, Sunny, Sunrise, MoonNight, Cloudy, Refresh
 } from '@element-plus/icons-vue'
 
 import {ElMessage, ElMessageBox, ElIcon} from 'element-plus'
@@ -187,6 +193,33 @@ const del_task = (scope) => {
 };
 
 
+const refresh = (scope) => {
+  axios.post('http://127.0.0.1:8000/delete/queue', {'pid': scope.row.pid}).then(response => {
+        tableData.value.splice(scope.$index, 1)
+        axios.post(`http://${scope.row.ip_address}:8000/create/task`, {
+          'name': scope.row.name,
+          'mode': scope.row.mode,
+          'task_count': scope.row.task_count,
+          'sleep': scope.row.sleep,
+          'dir': scope.row.dir
+        }).then(response => {
+              ElMessage({
+                type: 'success',
+                message: `refresh ${sizeForm.value.name} success`,
+              })
+            }
+        ).catch(response => {
+          ElMessage({
+            type: 'warning',
+            message: `${sizeForm.value.name}失败！`,
+          })
+        })
+      }
+  ).catch(response => {
+  })
+
+}
+
 const del_msg = (scope) => {
   ElMessageBox.confirm(
       `确定删除任务${scope.row.name}？`,
@@ -230,7 +263,7 @@ setInterval(function () {
     danger_totals.value = response.data['danger_totals']
   })
 
-}, 5000)
+}, 3000)
 
 
 </script>

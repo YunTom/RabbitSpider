@@ -26,15 +26,16 @@ def main(spider, mode, task_count, sleep):
         requests.post('http://127.0.0.1:8000/post/task',
                       json={'name': rabbit.name, 'ip_address': f'{socket.gethostbyname(socket.gethostname())}',
                             'task_count': task_count, 'status': 1, 'pid': os.getpid(), 'mode': mode, 'sleep': sleep,
-                            'create_time': datetime.now().strftime('%Y-%m-%d %H:%M:%S')})
+                            'create_time': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                            'dir': os.path.abspath(os.path.dirname(sys.argv[0]))})
         loop = asyncio.get_event_loop()
         loop.run_until_complete(rabbit.run(mode))
         if sleep:
             requests.post('http://127.0.0.1:8000/post/task',
                           json={'pid': os.getpid(),
                                 'next_time': (datetime.now() + timedelta(minutes=sleep)).strftime('%Y-%m-%d %H:%M:%S')})
-        elif mode != 'm':
-            requests.post('http://127.0.0.1:8000/delete/queue', json={'pid': os.getpid()})
+
+        requests.post('http://127.0.0.1:8000/delete/queue', json={'pid': os.getpid()})
     except Exception:
         print_exc()
 
