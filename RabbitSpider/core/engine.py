@@ -95,11 +95,10 @@ class Engine(object):
             self.__task_manager.create_task(self.deal_resp(incoming_message))
 
     async def consume(self):
-        for i in range(10):
+        while True:
             try:
                 future = asyncio.Future()
-                await self.__scheduler.consumer(self.__channel, queue=self.name, callback=self.deal_resp, future=future,
-                                                prefetch=self.__task_count)
+                await self.__scheduler.consumer(self.__channel, queue=self.name, callback=self.deal_resp,prefetch=self.__task_count)
             except ChannelClosed:
                 await asyncio.sleep(1)
                 self.logger.warning('rabbitmq重新连接')
@@ -107,7 +106,7 @@ class Engine(object):
                 continue
             await future
 
-    async def deal_resp(self, incoming_message: IncomingMessage, future=None):
+    async def deal_resp(self, incoming_message: IncomingMessage):
         ret = pickle.loads(incoming_message.body)
         self.logger.info(f'消费数据：{ret}')
         response = await self.__middlewares.downloader(Request(**ret))
@@ -128,8 +127,8 @@ class Engine(object):
         self.logger.info(f'{self.name}任务开始')
         self.__connection, self.__channel = await self.__scheduler.connect()
         self.session = await self.__middlewares.download.new_session()
-        await self.__pipelines.open_spider()
         await self.__scheduler.create_queue(self.__channel, self.name)
+        await self.__pipelines.open_spider()
         if mode == 'auto':
             await self.produce()
             await self.crawl()
