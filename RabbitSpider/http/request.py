@@ -1,12 +1,12 @@
 import warnings
 from typing import Callable, Optional, Union
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, field_validator,HttpUrl
 
 warnings.filterwarnings("ignore", category=UserWarning, module="pydantic")
 
 
 class Request(BaseModel):
-    url: Optional[str] = None
+    url: Optional[HttpUrl] = None
     params: Optional[dict] = None
     data: Union[dict, str, bytes, None] = None
     json: Optional[dict] = None
