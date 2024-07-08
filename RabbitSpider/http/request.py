@@ -1,6 +1,6 @@
 import warnings
 from typing import Callable, Optional, Union
-from pydantic import BaseModel, field_validator,HttpUrl
+from pydantic import BaseModel, field_validator, HttpUrl
 
 warnings.filterwarnings("ignore", category=UserWarning, module="pydantic")
 
@@ -20,9 +20,13 @@ class Request(BaseModel):
     retry: Optional[int] = 0
     meta: Optional[dict] = {}
 
+    @field_validator('url')
+    def unicode(cls, url):
+        return url.unicode_string()
+
     @field_validator('callback')
-    def call(cls, key):
-        if callable(key):
-            return key.__name__
+    def call(cls, callback):
+        if callable(callback):
+            return callback.__name__
         else:
-            return key
+            return callback

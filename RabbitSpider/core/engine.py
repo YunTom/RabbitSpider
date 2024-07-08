@@ -69,11 +69,14 @@ class Engine(object):
         else:
             raise RabbitExpect('回调函数返回类型错误！')
 
+    async def produce(self):
+        await self.__scheduler.queue_purge(self.__channel, self.name)
+        await self.routing(self.start_requests())
+
     async def crawl(self):
         while True:
             try:
-                incoming_message: IncomingMessage = await self.__scheduler.consumer(self.__channel,
-                                                                                    queue=self.name)
+                incoming_message: IncomingMessage = await self.__scheduler.consumer(self.__channel, self.name)
             except QueueEmpty:
                 if self.__task_manager.all_done():
                     await self.__scheduler.delete_queue(self.__channel, self.name)
@@ -94,7 +97,8 @@ class Engine(object):
         while True:
             try:
                 future = asyncio.Future()
-                await self.__scheduler.consumer(self.__channel, queue=self.name, callback=self.deal_resp,prefetch=self.__task_count)
+                await self.__scheduler.consumer(self.__channel, queue=self.name, callback=self.deal_resp,
+                                                prefetch=self.__task_count)
             except ChannelClosed:
                 await asyncio.sleep(1)
                 self.logger.warning('rabbitmq重新连接')
@@ -127,10 +131,10 @@ class Engine(object):
         await self.__scheduler.create_queue(self.__channel, self.name)
         await self.__pipelines.open_spider()
         if mode == 'auto':
-            await self.routing(self.start_requests())
+            await self.produce()
             await self.crawl()
         elif mode == 'm':
-           await self.routing(self.start_requests())
+            await self.produce()
         elif mode == 'w':
             await self.consume()
         else:

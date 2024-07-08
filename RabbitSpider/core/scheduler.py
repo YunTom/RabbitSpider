@@ -19,9 +19,7 @@ class Scheduler(object):
 
     @staticmethod
     async def create_queue(channel, queue: str):
-        queue = await channel.declare_queue(name=queue, durable=True,
-                                            arguments={"x-max-priority": 10})
-        await queue.purge()
+        await channel.declare_queue(name=queue, durable=True, arguments={"x-max-priority": 10})
 
     @staticmethod
     async def producer(channel, queue: str, body: dict):
@@ -31,13 +29,17 @@ class Scheduler(object):
 
     @staticmethod
     async def consumer(channel, queue: str, callback: Optional[Callable] = None, prefetch: int = 1):
-        queue = await channel.declare_queue(name=queue, durable=True, passive=True,
-                                            arguments={"x-max-priority": 10})
+        queue = await channel.declare_queue(name=queue, durable=True, passive=True, arguments={"x-max-priority": 10})
         if callback:
             await channel.set_qos(prefetch_count=prefetch)
             await queue.consume(callback=callback)
         else:
             return await queue.get()
+
+    @staticmethod
+    async def queue_purge(channel, queue: str):
+        queue = await channel.declare_queue(name=queue, durable=True, passive=True, arguments={"x-max-priority": 10})
+        await queue.purge()
 
     @staticmethod
     async def delete_queue(channel, queue: str):
