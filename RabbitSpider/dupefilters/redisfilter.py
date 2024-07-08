@@ -4,7 +4,7 @@ import redis
 from RabbitSpider.dupefilters import DupeFilter
 
 
-class RedisDupeFilter(DupeFilter):
+class RedisFilter(DupeFilter):
     def __init__(self, settings):
         super().__init__(settings)
         self.repeat = os.path.basename(sys.argv[0])

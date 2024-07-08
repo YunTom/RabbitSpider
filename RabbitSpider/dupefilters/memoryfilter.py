@@ -1,7 +1,7 @@
 from RabbitSpider.dupefilters import DupeFilter
 
 
-class MemoryDupeFilter(DupeFilter):
+class MemoryFilter(DupeFilter):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.repeat = set()

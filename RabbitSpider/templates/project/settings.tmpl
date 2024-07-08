@@ -8,14 +8,14 @@ RABBIT_PASSWORD = '123456'
 RABBIT_VIRTUAL_HOST = '/'
 
 # redis 去重
-# DUPEFILTER_CLASS = 'RabbitSpider.dupefilters.redisdupefilter.RedisDupeFilter'
+# DUPEFILTER_CLASS = 'RabbitSpider.dupefilters.redisfilter.RedisFilter'
 # REDIS_HOST = '127.0.0.1'
 # REDIS_PORT = 6379
 # REDIS_PASSWORD = None
 # REDIS_DB = 1
 
 # set 去重
-DUPEFILTER_CLASS = 'RabbitSpider.dupefilters.memorydupefilter.MemoryDupeFilter'
+DUPEFILTER_CLASS = 'RabbitSpider.dupefilters.memoryfilter.MemoryFilter'
 
 # 日志
 LOG_LEVEL = 'ERROR'
