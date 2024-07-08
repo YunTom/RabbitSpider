@@ -69,9 +69,6 @@ class Engine(object):
         else:
             raise RabbitExpect('回调函数返回类型错误！')
 
-    async def produce(self):
-        await self.routing(self.start_requests())
-
     async def crawl(self):
         while True:
             try:
@@ -130,10 +127,10 @@ class Engine(object):
         await self.__scheduler.create_queue(self.__channel, self.name)
         await self.__pipelines.open_spider()
         if mode == 'auto':
-            await self.produce()
+            await self.routing(self.start_requests())
             await self.crawl()
         elif mode == 'm':
-            await self.produce()
+           await self.routing(self.start_requests())
         elif mode == 'w':
             await self.consume()
         else:
