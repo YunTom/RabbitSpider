@@ -121,7 +121,8 @@ class Engine(object):
                 print_exc()
                 for task in asyncio.all_tasks():
                     task.cancel()
-            await incoming_message.ack()
+            else:
+                await incoming_message.ack()
 
     async def run(self, mode):
         self.logger.info(f'{self.name}任务开始')
