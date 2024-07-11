@@ -1,5 +1,4 @@
 import os
-import sys
 import uvicorn, subprocess
 from starlette.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -36,7 +35,7 @@ class TaskData(BaseModel):
     create_time: Optional[datetime] = None
     stop_time: Optional[datetime] = None
     next_time: Optional[datetime] = None
-    sleep: Optional[int] = None
+    crontab: Optional[str] = None
     pid: Optional[int] = None,
     mode: Optional[str] = None
     dir: Optional[str] = None
@@ -49,7 +48,7 @@ class CreateData(BaseModel):
     name: Optional[str] = None
     mode: Optional[str] = None
     task_count: Optional[int] = None
-    sleep: Optional[int] = None
+    crontab: Optional[str] = None
     dir: Optional[str] = None
 
     class Config:
@@ -71,7 +70,7 @@ app.add_middleware(
 async def get_task():
     resp = []
     connection, channel = await scheduler.connect()
-    stmt = select(table).where(table.columns.next_time.is_(None), table.columns.stop_time.is_(None))
+    stmt = select(table).where(table.columns.status == 1)
     results = session.execute(stmt)
     session.commit()
     for result in results:
@@ -90,7 +89,7 @@ async def get_task():
 async def get_danger():
     resp = []
     connection, channel = await scheduler.connect()
-    stmt = select(table).where(table.columns.stop_time.isnot(None))
+    stmt = select(table).where(table.columns.status == 0)
     results = session.execute(stmt)
     session.commit()
     for result in results:
@@ -104,11 +103,10 @@ async def get_danger():
 # 已完成的任务
 @app.get('/get/done')
 async def get_done():
-    stmt = select(table).where(table.columns.next_time.isnot(None))
+    stmt = select(table).where(table.columns.status == 2)
     results = session.execute(stmt)
     session.commit()
     resp = jsonable_encoder([TaskData.model_validate(result).model_dump() for result in results])
-    resp.append({'length': len(resp)})
     return resp
 
 
@@ -135,13 +133,18 @@ async def get_count():
 
 # 更新任务状态
 @app.post('/post/task')
-async def start_task(item: TaskData):
-    stmt = select(table).where(table.columns.pid == item.pid)
-    result = engine.connect().execute(stmt).first()
-    if result:
-        stmt = update(table).where(table.columns.pid == item.pid).values(
-            {key: value for key, value in item.model_dump().items() if
-             value is not None or key == 'stop_time' or key == 'next_time'})
+async def post_task(item: TaskData):
+    args = {key: value for key, value in item.model_dump().items() if
+            value is not None or key == 'stop_time'}
+    if item.status == 2:
+        args['next_time'] = '2000-12-02 11:12:32'
+    if engine.connect().execute(select(table).where(table.columns.pid == item.pid)).first():
+        stmt = update(table).where(table.columns.pid == item.pid).values(args)
+        session.execute(stmt)
+        session.commit()
+    elif engine.connect().execute(
+            select(table).where(table.columns.name == item.name, item.mode == table.columns.mode)).first():
+        stmt = update(table).where(table.columns.name == item.name, item.mode == table.columns.mode).values(args)
         session.execute(stmt)
         session.commit()
     else:
@@ -152,27 +155,28 @@ async def start_task(item: TaskData):
 
 @app.post('/create/task')
 async def create_task(item: CreateData):
-    stmt = select(table).where(table.columns.name == item.name, item.mode != 'w')
-    result = engine.connect().execute(stmt).first()
-    if result or item.name not in os.listdir(item.dir):
-        return Response(status_code=status.HTTP_410_GONE)
-    if sys.platform == 'win32':
-        subprocess.Popen(
-            args=['python', item.name, f'mode={item.mode}', f'task_count={item.task_count}', f'sleep={item.sleep}'],
-            cwd=rf'{item.dir}', shell=True)
+    if item.mode != 'w':
+        stmt = select(table).where(table.columns.name == item.name)
+        result = engine.connect().execute(stmt).first()
+        if result or item.name not in os.listdir(item.dir):
+            return Response(status_code=status.HTTP_410_GONE)
+        else:
+            args = {key: value for key, value in item.model_dump().items() if
+                    value is not None}
+            args['next_time'] = '2000-12-02 11:12:32'
+            stmt = insert(table).values(args)
+            session.execute(stmt)
+            session.commit()
     else:
         subprocess.Popen(
-            args=['python3', item.name, f'mode={item.mode}', f'task_count={item.task_count}', f'sleep={item.sleep}'],
+            args=['python3', item.name, f'mode={item.mode}', f'task_count={item.task_count}'],
             cwd=rf'{item.dir}', shell=True)
 
 
 @app.post('/delete/queue')
 async def delete_queue(item: TaskData):
     connection, channel = await scheduler.connect()
-    if sys.platform == 'win32':
-        subprocess.Popen(f'taskkill /f /pid {item.pid}').wait()
-    else:
-        subprocess.Popen(f'kill -9 {item.pid}').wait()
+    subprocess.Popen(f'kill -9 {item.pid}').wait()
     stmt = delete(table).where(table.columns.pid == item.pid)
     session.execute(stmt)
     session.commit()

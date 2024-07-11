@@ -31,7 +31,7 @@ class Engine(object):
         self.settings = SettingManager(self.custom_settings)
         self.__scheduler = Scheduler(self.settings)
         self.__filter = FilterManager(self.settings)
-        self.logger = Logger(self.settings, self.name).logger
+        self.logger = Logger(self.settings, self.name)
         self.__task_manager = TaskManager(self.__task_count)
         self.__middlewares = MiddlewareManager.create_instance(self)
         self.__pipelines = PipelineManager.create_instance(self)
