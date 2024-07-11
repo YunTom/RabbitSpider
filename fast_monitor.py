@@ -1,4 +1,6 @@
 import os
+from croniter import croniter
+from crontab import CronTab
 import uvicorn, subprocess
 from starlette.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -156,20 +158,24 @@ async def post_task(item: TaskData):
 @app.post('/create/task')
 async def create_task(item: CreateData):
     if item.mode != 'w':
-        stmt = select(table).where(table.columns.name == item.name)
+        stmt = select(table).where(table.columns.name == item.name, table.columns.mode != 'w')
         result = engine.connect().execute(stmt).first()
         if result or item.name not in os.listdir(item.dir):
             return Response(status_code=status.HTTP_410_GONE)
         else:
             args = {key: value for key, value in item.model_dump().items() if
                     value is not None}
-            args['next_time'] = '2000-12-02 11:12:32'
+            cron = CronTab(user='root')
+            job = cron.new(command=f'{item.dir};{item.name}', comment=f'{item.name}')
+            job.setall(item.crontab)
+            cron.write(user='root')
+            args['next_time'] = croniter(item.crontab, datetime.now()).get_next(datetime)
             stmt = insert(table).values(args)
             session.execute(stmt)
             session.commit()
     else:
         subprocess.Popen(
-            args=['python3', item.name, f'mode={item.mode}', f'task_count={item.task_count}'],
+            args=['python', item.name, f'mode={item.mode}', f'task_count={item.task_count}'],
             cwd=rf'{item.dir}', shell=True)
 
 
@@ -177,6 +183,10 @@ async def create_task(item: CreateData):
 async def delete_queue(item: TaskData):
     connection, channel = await scheduler.connect()
     subprocess.Popen(f'kill -9 {item.pid}').wait()
+    cron = CronTab(user='root')
+    job = cron.find_comment(item.name)
+    cron.remove(job)
+    cron.write(user='root')
     stmt = delete(table).where(table.columns.pid == item.pid)
     session.execute(stmt)
     session.commit()
