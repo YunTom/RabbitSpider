@@ -52,6 +52,8 @@ class CreateData(BaseModel):
     task_count: Optional[int] = None
     crontab: Optional[str] = None
     dir: Optional[str] = None
+    status: Optional[int] = None
+    ip_address: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -115,20 +117,17 @@ async def get_done():
 @app.get('/get/count')
 async def get_count():
     resp = {}
-    stmt = select(func.count(table.columns.pid)).where(table.columns.next_time.is_(None),
-                                                       table.columns.stop_time.is_(None))
+    stmt = select(func.count(table.columns.name)).where(table.columns.next_time.is_(None),
+                                                        table.columns.stop_time.is_(None))
     results = session.execute(stmt)
-    session.commit()
     resp['success_totals'] = results.scalar()
 
-    stmt = select(func.count(table.columns.pid)).where(table.columns.stop_time.isnot(None))
+    stmt = select(func.count(table.columns.name)).where(table.columns.stop_time.isnot(None))
     results = session.execute(stmt)
-    session.commit()
     resp['danger_totals'] = results.scalar()
 
-    stmt = select(func.count(table.columns.pid)).where(table.columns.next_time.isnot(None))
+    stmt = select(func.count(table.columns.name)).where(table.columns.next_time.isnot(None))
     results = session.execute(stmt)
-    session.commit()
     resp['info_totals'] = results.scalar()
     return resp
 
@@ -139,7 +138,9 @@ async def post_task(item: TaskData):
     args = {key: value for key, value in item.model_dump().items() if
             value is not None or key == 'stop_time'}
     if item.status == 2:
-        args['next_time'] = '2000-12-02 11:12:32'
+        stmt = select(table.columns.next_time).where(table.columns.name == item.name, item.mode == table.columns.mode)
+        result = engine.connect().execute(stmt).first()
+        args['next_time'] = croniter(result.scalar(), datetime.now()).get_next(datetime).strftime('%Y-%m-%d %H:%M:%S')
     if engine.connect().execute(select(table).where(table.columns.pid == item.pid)).first():
         stmt = update(table).where(table.columns.pid == item.pid).values(args)
         session.execute(stmt)
@@ -169,13 +170,13 @@ async def create_task(item: CreateData):
             job = cron.new(command=f'{item.dir};{item.name}', comment=f'{item.name}')
             job.setall(item.crontab)
             cron.write(user='root')
-            args['next_time'] = croniter(item.crontab, datetime.now()).get_next(datetime)
+            args['next_time'] = croniter(item.crontab, datetime.now()).get_next(datetime).strftime('%Y-%m-%d %H:%M:%S')
             stmt = insert(table).values(args)
             session.execute(stmt)
             session.commit()
     else:
         subprocess.Popen(
-            args=['python', item.name, f'mode={item.mode}', f'task_count={item.task_count}'],
+            args=['python3', item.name, f'mode={item.mode}', f'task_count={item.task_count}'],
             cwd=rf'{item.dir}', shell=True)
 
 

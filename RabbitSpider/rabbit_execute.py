@@ -31,7 +31,7 @@ def main(spider, mode, task_count):
         loop.run_until_complete(rabbit.run(mode))
 
         requests.post('http://127.0.0.1:8000/post/task',
-                      json={'pid': os.getpid(), 'status': 2})
+                      json={'pid': os.getpid(), 'name': rabbit.name, 'status': 2})
 
     except Exception:
         print_exc()
