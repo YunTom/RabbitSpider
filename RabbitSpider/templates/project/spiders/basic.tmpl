@@ -1,4 +1,4 @@
-import os
+import os, asyncio
 from RabbitSpider import Engine
 from RabbitSpider import Request
 from RabbitSpider.rabbit_execute import go
@@ -15,4 +15,4 @@ class ${spider}(Engine):
 
 
 if __name__ == '__main__':
-    go(${spider}, 'auto', 10)
+    asyncio.run(go(${spider}, 'auto', 10))

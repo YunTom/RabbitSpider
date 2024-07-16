@@ -119,7 +119,7 @@
           </el-form-item>
           <el-form-item label="工作目录">
             <el-select v-model="sizeForm.dir" style="width:300px" size="large">
-              <el-option label="emmo" value="D:\pycode\RabbitSpider\emmo\spiders"></el-option>
+              <el-option label="emmo" value="/mnt/d/pycode/RabbitSpider/emmo/spiders"></el-option>
             </el-select>
           </el-form-item>
           <el-form-item size="large">

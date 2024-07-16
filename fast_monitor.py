@@ -13,7 +13,7 @@ from fastapi.encoders import jsonable_encoder
 from sqlalchemy.orm.session import sessionmaker
 from sqlalchemy import create_engine, Table, MetaData, select, update, insert, delete, func
 
-settings = SettingManager({'RABBIT_HOST': '127.0.0.1',
+settings = SettingManager({'RABBIT_HOST': '172.22.80.1',
                            'RABBIT_PORT': 5672,
                            'RABBIT_USERNAME': 'yuntom',
                            'RABBIT_PASSWORD': '123456',
@@ -21,7 +21,7 @@ settings = SettingManager({'RABBIT_HOST': '127.0.0.1',
 
 scheduler = Scheduler(settings)
 
-engine = create_engine('mysql+pymysql://root:123456@127.0.0.1:3306/monitor')
+engine = create_engine('mysql+pymysql://root:123456@172.22.80.1:3306/monitor')
 table = Table('monitor_table', MetaData(), autoload_with=engine)
 
 Session = sessionmaker(bind=engine)
@@ -136,12 +136,23 @@ async def get_count():
 @app.post('/post/task')
 async def post_task(item: TaskData):
     args = {key: value for key, value in item.model_dump().items() if
-            value is not None or key == 'stop_time'}
+            value is not None or key == 'stop_time' or key == 'next_time'}
     if item.status == 2:
-        stmt = select(table.columns.next_time).where(table.columns.name == item.name, item.mode == table.columns.mode)
+        stmt = select(table.columns.crontab).where(table.columns.name == item.name, table.columns.mode == item.mode)
         result = engine.connect().execute(stmt).first()
-        args['next_time'] = croniter(result.scalar(), datetime.now()).get_next(datetime).strftime('%Y-%m-%d %H:%M:%S')
-    if engine.connect().execute(select(table).where(table.columns.pid == item.pid)).first():
+        if result:
+            args['next_time'] = croniter(result[0], datetime.now()).get_next(datetime).strftime(
+                '%Y-%m-%d %H:%M:%S')
+        else:
+            stmt = delete(table).where(table.columns.pid == item.pid)
+            session.execute(stmt)
+            session.commit()
+            return
+    if item.mode == 'w':
+        stmt = insert(table).values(**item.model_dump())
+        session.execute(stmt)
+        session.commit()
+    elif engine.connect().execute(select(table).where(table.columns.pid == item.pid)).first():
         stmt = update(table).where(table.columns.pid == item.pid).values(args)
         session.execute(stmt)
         session.commit()
@@ -163,31 +174,30 @@ async def create_task(item: CreateData):
         result = engine.connect().execute(stmt).first()
         if result or item.name not in os.listdir(item.dir):
             return Response(status_code=status.HTTP_410_GONE)
-        else:
-            args = {key: value for key, value in item.model_dump().items() if
-                    value is not None}
-            cron = CronTab(user='root')
-            job = cron.new(command=f'{item.dir};{item.name}', comment=f'{item.name}')
-            job.setall(item.crontab)
-            cron.write(user='root')
-            args['next_time'] = croniter(item.crontab, datetime.now()).get_next(datetime).strftime('%Y-%m-%d %H:%M:%S')
+        if item.crontab:
+            cron = CronTab(user='yuntom')
+            job = cron.new(command=f'cd {item.dir};python3 {item.name} mode={item.mode} task_count={item.task_count}',
+                           comment=f'{item.name}')
+            job.setall(f'{item.crontab}')
+            cron.write(user='yuntom')
+            args = {key: value for key, value in item.model_dump().items() if value is not None}
+            args['next_time'] = croniter(item.crontab, datetime.now()).get_next(datetime).strftime(
+                '%Y-%m-%d %H:%M:%S')
             stmt = insert(table).values(args)
             session.execute(stmt)
             session.commit()
-    else:
-        subprocess.Popen(
-            args=['python3', item.name, f'mode={item.mode}', f'task_count={item.task_count}'],
-            cwd=rf'{item.dir}', shell=True)
+            return
+    subprocess.Popen(rf'cd {item.dir};python3 {item.name} mode={item.mode} task_count={item.task_count}', shell=True)
 
 
 @app.post('/delete/queue')
 async def delete_queue(item: TaskData):
     connection, channel = await scheduler.connect()
-    subprocess.Popen(f'kill -9 {item.pid}').wait()
-    cron = CronTab(user='root')
+    subprocess.Popen(f'kill -9 {item.pid}', shell=True).wait()
+    cron = CronTab(user='yuntom')
     job = cron.find_comment(item.name)
     cron.remove(job)
-    cron.write(user='root')
+    cron.write(user='yuntom')
     stmt = delete(table).where(table.columns.pid == item.pid)
     session.execute(stmt)
     session.commit()
