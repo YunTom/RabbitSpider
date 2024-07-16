@@ -24,7 +24,7 @@ class CurlDownload(object):
                                     allow_redirects=request.get('allow_redirects', True),
                                     http_version=self.http_version,
                                     impersonate=self.impersonate,
-                                    timeout=request.get('timeout', 30)
+                                    timeout=request.get('timeout', 60)
                                     )
 
         elif request['method'].upper() == 'POST':
