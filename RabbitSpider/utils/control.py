@@ -54,8 +54,8 @@ class SettingManager(object):
     def __delitem__(self, key):
         del self.attribute[key]
 
-    def get(self, key):
-        return self[key] if self[key] else None
+    def get(self, key, value=None):
+        return self[key] if self[key] else value
 
     def getlist(self, key):
         return self[key] if self[key] else []
