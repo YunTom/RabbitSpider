@@ -6,7 +6,8 @@ class MemoryFilter(DupeFilter):
         super().__init__(*args, **kwargs)
         self.repeat = set()
 
-    def request_seen(self, fingerprint):
+    def request_seen(self, request):
+        fingerprint = self.request_fingerprint(request)
         if fingerprint in self.repeat:
             return False
         else:

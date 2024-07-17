@@ -12,7 +12,8 @@ class RedisFilter(DupeFilter):
                                        db=settings.get('REDIS_DB'), password=settings.get('REDIS_PASSWORD'))
         self.redis.delete(self.repeat)
 
-    def request_seen(self, fingerprint):
+    def request_seen(self, request):
+        fingerprint = self.request_fingerprint(request)
         if self.redis:
             result = self.redis.sadd(self.repeat, fingerprint)
             return result
