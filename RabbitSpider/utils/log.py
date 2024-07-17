@@ -10,7 +10,6 @@ class Logger(object):
                        format="{time:YYYY-MM-DD HH:mm:ss} | {level} | {extra[scope]} | {name}:{line} - {message}")
             self.logger = logger.bind(scope=name)
         else:
-            logger.level(settings.get('LOG_LEVEL'))
             self.logger = logger
 
     def info(self, msg):
