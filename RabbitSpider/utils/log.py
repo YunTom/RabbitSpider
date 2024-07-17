@@ -4,7 +4,8 @@ from loguru import logger
 class Logger(object):
     def __init__(self, settings, name):
         if settings.get('LOG_FILE'):
-            logger.add("%s/rabbit_{time:YYYY-MM-DD}.log" % settings.get('LOG_FILE'), level=settings.get('LOG_LEVEL'),
+            logger.add("%s/rabbit_{time:YYYY-MM-DD}.log" % settings.get('LOG_FILE'),
+                       level=settings.get('LOG_LEVEL', 'ERROR'),
                        rotation="1 day",
                        retention="1 week",
                        format="{time:YYYY-MM-DD HH:mm:ss} | {level} | {extra[scope]} | {name}:{line} - {message}")
