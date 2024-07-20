@@ -65,9 +65,9 @@ class SettingManager(object):
 
 
 class TaskManager(object):
-    def __init__(self, sync: int):
+    def __init__(self, task_count: int):
         self.current_task: Final[set] = set()
-        self.semaphore = Semaphore(sync)
+        self.semaphore = Semaphore(task_count)
 
     def create_task(self, coroutine) -> Task:
         task = asyncio.create_task(coroutine)

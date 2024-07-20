@@ -24,7 +24,8 @@ LOG_FILE = '../rabbit_log'
 # 中间件
 MIDDLEWARES = [
     'RabbitSpider.middlewares.retry.RetryMiddleware',
-    '${project}.middlewares.Middleware'
+    'RabbitSpider.middlewares.allow_http_code.AllowHttpCodeMiddleware',
+    '${project}.middlewares.Middleware',
 ]
 
 # 管道
@@ -41,3 +42,5 @@ MAX_RETRY = 5
 RETRY_HTTP_CODES = []
 # 异常重试
 RETRY_EXCEPTIONS = []
+# 允许通过状态码
+ALLOW_HTTP_CODES= [200]
