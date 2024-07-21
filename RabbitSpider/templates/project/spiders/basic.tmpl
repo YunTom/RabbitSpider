@@ -6,6 +6,7 @@ from RabbitSpider.rabbit_execute import go
 
 class ${spider}(Engine):
     name = os.path.basename(__file__)
+    custom_settings = {}
 
     async def start_requests(self):
         pass
