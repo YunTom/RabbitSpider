@@ -192,7 +192,6 @@ async def create_task(item: CreateData):
 
 @app.post('/delete/queue')
 async def delete_queue(item: TaskData):
-    connection, channel = await scheduler.connect()
     subprocess.Popen(f'kill -9 {item.pid}', shell=True).wait()
     cron = CronTab(user='root')
     job = cron.find_comment(item.name)
@@ -201,8 +200,6 @@ async def delete_queue(item: TaskData):
     stmt = delete(table).where(table.columns.pid == item.pid)
     session.execute(stmt)
     session.commit()
-    await connection.close()
-    await channel.close()
 
 
 if __name__ == "__main__":

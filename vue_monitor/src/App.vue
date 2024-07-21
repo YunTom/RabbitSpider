@@ -114,12 +114,12 @@
           </el-form-item>
           <el-form-item label="服务器ip">
             <el-select v-model="sizeForm.ip_address" style="width:300px" size="large">
-              <el-option label="127.0.0.1" value="127.0.0.1"></el-option>
+              <el-option label="60.204.154.131" value="60.204.154.131"></el-option>
             </el-select>
           </el-form-item>
           <el-form-item label="工作目录">
             <el-select v-model="sizeForm.dir" style="width:300px" size="large">
-              <el-option label="emmo" value="/mnt/d/pycode/RabbitSpider/emmo/spiders"></el-option>
+              <el-option label="emmo" value="/mnt/emmo/spiders"></el-option>
             </el-select>
           </el-form-item>
           <el-form-item size="large">
@@ -164,7 +164,7 @@ const onSubmit = () => {
     'task_count': sizeForm.value.task_count,
     'crontab': sizeForm.value.crontab,
     'dir': sizeForm.value.dir,
-    'ip_address':sizeForm.value.ip_address,
+    'ip_address': sizeForm.value.ip_address,
     'status': 2
   }).then(response => {
         ElMessage({
@@ -183,7 +183,7 @@ const onSubmit = () => {
 
 
 const del_task = (scope) => {
-  axios.post('http://60.204.154.131:8000/delete/queue', {'pid': scope.row.pid}).then(response => {
+  axios.post('http://60.204.154.131:8000/delete/queue', {'pid': scope.row.pid,'name': scope.row.name}).then(response => {
         tableData.value.splice(scope.$index, 1)
       }
   ).catch(response => {
