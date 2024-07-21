@@ -1,4 +1,5 @@
 import asyncio
+from traceback import print_exc
 from collections import defaultdict
 from importlib import import_module
 from inspect import iscoroutinefunction
@@ -170,7 +171,13 @@ class MiddlewareManager(object):
         except Exception as exc:
             resp = await self._process_exception(request, exc)
         if isinstance(resp, Response):
-            resp = await self._process_response(request, resp)
+            try:
+                resp = await self._process_response(request, resp)
+            except Exception as exc:
+                self.spider.logger.error(exc)
+                print_exc()
+                for task in asyncio.all_tasks():
+                    task.cancel()
         if isinstance(resp, Request):
             return await self.spider.routing(resp)
         return resp
