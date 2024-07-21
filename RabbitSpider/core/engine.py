@@ -109,11 +109,11 @@ class Engine(object):
     async def deal_resp(self, incoming_message: IncomingMessage):
         ret = pickle.loads(incoming_message.body)
         self.logger.info(f'消费数据：{ret}')
-        response = await self.__middlewares.downloader(Request(**ret))
+        request, response = await self.__middlewares.downloader(Request(**ret))
         if response:
             try:
                 callback = getattr(self, ret['callback'])
-                result = callback(Request(**ret), response)
+                result = callback(request, response)
                 if result:
                     await self.routing(result)
             except Exception as e:
