@@ -1,5 +1,4 @@
 from RabbitSpider.middlewares import BaseMiddleware
-from RabbitSpider.utils.exceptions import RabbitExpect
 
 
 class AllowHttpCodeMiddleware(BaseMiddleware):
