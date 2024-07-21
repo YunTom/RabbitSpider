@@ -183,7 +183,7 @@ const onSubmit = () => {
 
 
 const del_task = (scope) => {
-  axios.post('http://127.0.0.1:8000/delete/queue', {'pid': scope.row.pid}).then(response => {
+  axios.post('http://60.204.154.131:8000/delete/queue', {'pid': scope.row.pid}).then(response => {
         tableData.value.splice(scope.$index, 1)
       }
   ).catch(response => {
@@ -216,19 +216,19 @@ const del_msg = (scope) => {
 
 setInterval(function () {
   if (block.value === 1) {
-    axios.get('http://127.0.0.1:8000/get/task').then(response => {
+    axios.get('http://60.204.154.131:8000/get/task').then(response => {
       tableData.value = response.data
     })
   } else if (block.value === 2) {
-    axios.get('http://127.0.0.1:8000/get/done').then(response => {
+    axios.get('http://60.204.154.131:8000/get/done').then(response => {
       nextData.value = response.data
     })
   } else if (block.value === 3) {
-    axios.get('http://127.0.0.1:8000/get/danger').then(response => {
+    axios.get('http://60.204.154.131:8000/get/danger').then(response => {
       stopData.value = response.data
     })
   }
-  axios.get('http://127.0.0.1:8000/get/count').then(response => {
+  axios.get('http://60.204.154.131:8000/get/count').then(response => {
     success_totals.value = response.data['success_totals']
     info_totals.value = response.data['info_totals']
     danger_totals.value = response.data['danger_totals']

@@ -13,7 +13,7 @@ from fastapi.encoders import jsonable_encoder
 from sqlalchemy.orm.session import sessionmaker
 from sqlalchemy import create_engine, Table, MetaData, select, update, insert, delete, func
 
-settings = SettingManager({'RABBIT_HOST': '172.22.80.1',
+settings = SettingManager({'RABBIT_HOST': '60.204.154.131',
                            'RABBIT_PORT': 5672,
                            'RABBIT_USERNAME': 'yuntom',
                            'RABBIT_PASSWORD': '123456',
@@ -21,7 +21,7 @@ settings = SettingManager({'RABBIT_HOST': '172.22.80.1',
 
 scheduler = Scheduler(settings)
 
-engine = create_engine('mysql+pymysql://root:123456@172.22.80.1:3306/monitor')
+engine = create_engine('mysql+pymysql://root:123456@60.204.154.131:3306/monitor')
 table = Table('monitor_table', MetaData(), autoload_with=engine)
 
 Session = sessionmaker(bind=engine)
@@ -140,7 +140,7 @@ async def post_task(item: TaskData):
     if item.status == 2:
         stmt = select(table.columns.crontab).where(table.columns.name == item.name, table.columns.mode == item.mode)
         result = engine.connect().execute(stmt).first()
-        if result:
+        if result and result[0]:
             args['next_time'] = croniter(result[0], datetime.now()).get_next(datetime).strftime(
                 '%Y-%m-%d %H:%M:%S')
         else:
@@ -175,11 +175,11 @@ async def create_task(item: CreateData):
         if result or item.name not in os.listdir(item.dir):
             return Response(status_code=status.HTTP_410_GONE)
         if item.crontab:
-            cron = CronTab(user='yuntom')
+            cron = CronTab(user='root')
             job = cron.new(command=f'cd {item.dir};python3 {item.name} mode={item.mode} task_count={item.task_count}',
                            comment=f'{item.name}')
             job.setall(f'{item.crontab}')
-            cron.write(user='yuntom')
+            cron.write()
             args = {key: value for key, value in item.model_dump().items() if value is not None}
             args['next_time'] = croniter(item.crontab, datetime.now()).get_next(datetime).strftime(
                 '%Y-%m-%d %H:%M:%S')
@@ -194,10 +194,10 @@ async def create_task(item: CreateData):
 async def delete_queue(item: TaskData):
     connection, channel = await scheduler.connect()
     subprocess.Popen(f'kill -9 {item.pid}', shell=True).wait()
-    cron = CronTab(user='yuntom')
+    cron = CronTab(user='root')
     job = cron.find_comment(item.name)
     cron.remove(job)
-    cron.write(user='yuntom')
+    cron.write()
     stmt = delete(table).where(table.columns.pid == item.pid)
     session.execute(stmt)
     session.commit()
