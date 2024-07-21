@@ -23,8 +23,8 @@ LOG_FILE = '../rabbit_log'
 
 # 中间件
 MIDDLEWARES = [
-    'RabbitSpider.middlewares.retry.RetryMiddleware',
     'RabbitSpider.middlewares.allow_http_code.AllowHttpCodeMiddleware',
+    'RabbitSpider.middlewares.retry.RetryMiddleware',
     '${project}.middlewares.Middleware',
 ]
 
