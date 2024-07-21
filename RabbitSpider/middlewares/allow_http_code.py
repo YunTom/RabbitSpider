@@ -11,4 +11,5 @@ class AllowHttpCodeMiddleware(BaseMiddleware):
         if response.status in self.allow_http_code:
             return response
         else:
-            raise RabbitExpect(f'{request.model_dump()}，不允许的状态码：{response.status}')
+            spider.logger.error(f'{request.model_dump()}，不允许的状态码：{response.status}')
+            return True
