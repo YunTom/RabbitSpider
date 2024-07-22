@@ -25,18 +25,12 @@ LOG_FILE = '../rabbit_log'
 MIDDLEWARES = [
     'RabbitSpider.middlewares.allow_http_code.AllowHttpCodeMiddleware',
     'RabbitSpider.middlewares.retry.RetryMiddleware',
-    'RabbitSpider.middlewares.default_headers.DefaultHeadersMiddleware',
     'RabbitSpider.middlewares.download_delay.DownloadDelayMiddleware',
     '${project}.middlewares.Middleware',
 ]
 
 # 管道
 ITEM_PIPELINES = ['pipelines.Pipeline']
-
-# 默认请求头
-DEFAULT_HEADERS = {
-    'userAgent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0'
-}
 
 # 延时下载
 # DOWNLOAD_DELAY = (1, 3)
