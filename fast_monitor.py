@@ -139,7 +139,7 @@ async def post_task(item: TaskData):
             value is not None or key == 'stop_time' or key == 'next_time'}
     if item.status == 2:
         stmt = select(table.columns.crontab).where(table.columns.name == item.name, table.columns.mode == item.mode)
-        result = engine.connect().execute(stmt).first()
+        result = session.execute(stmt).first()
         if result and result[0]:
             args['next_time'] = croniter(result[0], datetime.now()).get_next(datetime).strftime(
                 '%Y-%m-%d %H:%M:%S')
@@ -152,11 +152,11 @@ async def post_task(item: TaskData):
         stmt = insert(table).values(**item.model_dump())
         session.execute(stmt)
         session.commit()
-    elif engine.connect().execute(select(table).where(table.columns.pid == item.pid)).first():
+    elif session.execute(select(table).where(table.columns.pid == item.pid)).first():
         stmt = update(table).where(table.columns.pid == item.pid).values(args)
         session.execute(stmt)
         session.commit()
-    elif engine.connect().execute(
+    elif session.execute(
             select(table).where(table.columns.name == item.name, item.mode == table.columns.mode)).first():
         stmt = update(table).where(table.columns.name == item.name, item.mode == table.columns.mode).values(args)
         session.execute(stmt)
@@ -171,7 +171,7 @@ async def post_task(item: TaskData):
 async def create_task(item: CreateData):
     if item.mode != 'w':
         stmt = select(table).where(table.columns.name == item.name, table.columns.mode != 'w')
-        result = engine.connect().execute(stmt).first()
+        result = session.execute(stmt).first()
         if result or item.name not in os.listdir(item.dir):
             return Response(status_code=status.HTTP_410_GONE)
         if item.crontab:
