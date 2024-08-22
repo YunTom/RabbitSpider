@@ -10,6 +10,7 @@ pip install RabbitSpider==2.6.0
 
 创建项目命令：
     rabbit create [项目名称] [爬虫文件名称]
+
 如：rabbit create emmo momo
 
     import os, asyncio
