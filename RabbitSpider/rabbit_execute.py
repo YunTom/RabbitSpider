@@ -1,10 +1,10 @@
 import asyncio
 import sys
 import os
-from typing import List
 import requests
 import socket
 from datetime import datetime
+from typing import Type, List
 from traceback import print_exc
 from signal import signal, SIGINT, SIGTERM
 from RabbitSpider.utils.control import TaskManager
@@ -38,7 +38,7 @@ async def main(spider, mode, task_count):
         print_exc()
 
 
-async def go(spider, mode: str = 'auto', task_count: int = 1):
+async def go(spider: Type, mode: str = 'auto', task_count: int = 1):
     for i in sys.argv[1:]:
         key, value = i.split('=')
         if key == 'mode':
@@ -48,7 +48,7 @@ async def go(spider, mode: str = 'auto', task_count: int = 1):
     await main(spider, mode=mode, task_count=task_count)
 
 
-async def batch_go(spiders: List, mode: str = 'auto', task_pool: int = 10):
+async def batch_go(spiders: List[Type], mode: str = 'auto', task_pool: int = 10):
     task_manager = TaskManager(task_pool)
     for spider in spiders:
         await task_manager.semaphore.acquire()
