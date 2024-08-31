@@ -1,5 +1,6 @@
 from curl_cffi.requests import AsyncSession
-from RabbitSpider.http.response import Response
+from RabbitSpider import Response
+from RabbitSpider.utils.exceptions import RabbitExpect
 
 
 class CurlDownload(object):
@@ -38,7 +39,7 @@ class CurlDownload(object):
                                      timeout=request.get('timeout', 180))
 
         else:
-            raise "{%s}请求方式未定义，请自定义添加！" % request['method']
+            raise RabbitExpect(f"{request['method']}请求方式未定义，请自定义添加！")
 
         if res:
             response = Response(res)
