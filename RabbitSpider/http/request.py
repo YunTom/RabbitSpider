@@ -1,3 +1,4 @@
+import re
 from typing import Callable, get_type_hints
 from RabbitSpider.utils.exceptions import RabbitExpect
 
@@ -34,6 +35,7 @@ class Request(object):
         self.__argsValidators__({k: v for k, v in locals().items() if k not in ['self']})
 
     def __argsValidators__(self, kwargs):
+        pattern = re.compile('http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+')
         hints = get_type_hints(self.__init__)
         for key, value in kwargs.items():
             args_type = hints.get(key)
@@ -42,6 +44,8 @@ class Request(object):
                     raise RabbitExpect(f"Request参数类型错误{key}")
             else:
                 raise RabbitExpect(f"Request异常参数{key}")
+        if not re.match(pattern, kwargs['url']):
+            raise RabbitExpect(f'请检查url是否正确{kwargs["url"]}')
 
     @property
     def meta(self):

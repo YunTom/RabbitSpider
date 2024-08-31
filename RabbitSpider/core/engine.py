@@ -70,8 +70,14 @@ class Engine(object):
             raise RabbitExpect('回调函数返回类型错误！')
 
     async def produce(self):
-        await self.__scheduler.queue_purge(self.__channel, self.name)
-        await self.routing(self.start_requests())
+        try:
+            await self.__scheduler.queue_purge(self.__channel, self.name)
+            await self.routing(self.start_requests())
+        except Exception as e:
+            self.logger.error(f'{e}')
+            print_exc()
+            for task in asyncio.all_tasks():
+                task.cancel()
 
     async def crawl(self):
         while True:
