@@ -2,7 +2,6 @@ from RabbitSpider.items import ItemMeta
 
 
 class BaseItem(metaclass=ItemMeta):
-
     def __init__(self):
         self._values = {}
 

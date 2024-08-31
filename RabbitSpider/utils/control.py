@@ -172,7 +172,7 @@ class MiddlewareManager(object):
         if isinstance(resp, Response):
             resp = await self._process_response(request, resp)
         if isinstance(resp, Request):
-            return await self.spider.routing(resp)
+            return request, await self.spider.routing(resp)
         return request, resp
 
     @classmethod
