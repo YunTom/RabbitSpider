@@ -1,11 +1,8 @@
-from abc import ABCMeta
-
-
 class Field(dict):
     pass
 
 
-class ItemMeta(ABCMeta):
+class ItemMeta(type):
     def __new__(mcs, name, bases, attrs):
         field = {}
         for key, value in attrs.items():

@@ -1,9 +1,7 @@
-from collections.abc import MutableMapping
 from RabbitSpider.items import ItemMeta
 
 
-class BaseItem(MutableMapping, metaclass=ItemMeta):
-    FIELDS: dict = {}
+class BaseItem(metaclass=ItemMeta):
 
     def __init__(self):
         self._values = {}
@@ -40,5 +38,5 @@ class BaseItem(MutableMapping, metaclass=ItemMeta):
             return super(BaseItem, self).__getattribute__(item)
 
     def to_dict(self):
-        return dict(self)
+        return self._values
 

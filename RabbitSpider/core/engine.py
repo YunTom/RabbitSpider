@@ -48,8 +48,8 @@ class Engine(object):
         async def rule(res):
             if isinstance(res, Request):
                 if self.__filter.request_seen(res):
-                    self.logger.info(f'生产数据：{res.model_dump()}')
-                    await self.__scheduler.producer(self.__channel, queue=self.name, body=res.model_dump())
+                    self.logger.info(f'生产数据：{res.to_dict()}')
+                    await self.__scheduler.producer(self.__channel, queue=self.name, body=res.to_dict())
             elif isinstance(res, BaseItem):
                 await self.__pipelines.process_item(res)
 

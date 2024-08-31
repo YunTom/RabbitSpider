@@ -20,7 +20,7 @@ def load_class(_path):
     mod = import_module(module)
     try:
         cls = getattr(mod, name)
-    except AttributeError as exc:
+    except AttributeError:
         raise NameError(f"Module {module!r} doesn't define any project named {name!r}")
 
     return cls
@@ -142,7 +142,7 @@ class MiddlewareManager(object):
             if result:
                 break
         else:
-            return await self.download.fetch(self.spider.session, request.model_dump())
+            return await self.download.fetch(self.spider.session, request.to_dict())
 
     async def _process_response(self, request, response):
         for method in reversed(self.methods['process_response']):
