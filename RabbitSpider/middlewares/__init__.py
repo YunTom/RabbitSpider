@@ -1,5 +1,5 @@
-from RabbitSpider.http.request import Request
-from RabbitSpider.http.response import Response
+from RabbitSpider import Request
+from RabbitSpider import Response
 
 
 class BaseMiddleware:

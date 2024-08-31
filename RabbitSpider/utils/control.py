@@ -4,9 +4,9 @@ from importlib import import_module
 from inspect import iscoroutinefunction
 from typing import Final, Dict, List, Callable
 from asyncio import Task, Future, Semaphore
+from RabbitSpider import Request
+from RabbitSpider import Response
 from RabbitSpider import default_settings
-from RabbitSpider.http.request import Request
-from RabbitSpider.http.response import Response
 from RabbitSpider.core.download import CurlDownload
 
 
