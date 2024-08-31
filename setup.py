@@ -20,7 +20,6 @@ setuptools.setup(
         'curl_cffi>=0.6.2',
         'loguru>=0.7.2',
         'parsel>=1.9.1',
-        'pydantic>=2.7.0',
         'redis>=5.0.3',
         'w3lib>=2.1.2',
         'chardet>=5.2.0',
