@@ -1,6 +1,6 @@
-基于rabbitmq 做消息队列开发的分布式协程爬虫框架
+基于rabbitmq 做消息队列开发的分布式协程爬虫框架，结构用法与scrapy类似
 
-支持批量运行任务，运行模式 auto(适用于单机，自动关闭任务) 先生产后消费，m 只生产，w 只消费(一直监听任务)
+支持批量运行任务，运行模式 auto(适用于单机，运行完自动关闭任务)先生产后消费，m 只生产，w 只消费(一直监听任务)
 
 vue搭建的爬虫web管理，支持部署任务（基于crontab定时），实时监控，删除任务
 
@@ -10,6 +10,8 @@ pip install RabbitSpider==2.6.0
 
 创建项目命令：
     rabbit create [项目名称] [爬虫文件名称]
+
+如：rabbit create emmo momo
 
     import os, asyncio
     from RabbitSpider import Engine
