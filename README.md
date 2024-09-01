@@ -38,7 +38,7 @@ pip install RabbitSpider==2.6.0
     
         async def parse(self, request, response):
             url = 'https://www.jxsggzy.cn/' + jsonpath(response.json(), expr='$..linkurl')[0]
-            yield Request(url=url, dupe_filter=False, callback=self.parse_item)
+            yield Request(url=url, callback=self.parse_item)
     
         async def parse_item(self, request, response):
             item = Item()

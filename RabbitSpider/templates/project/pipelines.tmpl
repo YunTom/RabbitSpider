@@ -11,4 +11,5 @@ class Pipeline(BasePipeline):
         spider.logger.info(item.to_dict())
 
     async def close_spider(self, spider):
+        """关闭连接"""
         pass

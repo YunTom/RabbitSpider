@@ -2,7 +2,7 @@ import setuptools
 
 setuptools.setup(
     name='RabbitSpider',
-    version='2.2',
+    version='2.6.2',
     author='一纸',
     author_email='2395396520@qq.com',
     url='https://github.com/YunTom/RabbitSpider/tree/master',
@@ -14,7 +14,7 @@ setuptools.setup(
             'rabbit = RabbitSpider.utils.template:create_project',
         ],
     },
-    python_requires='>=3.8',
+    python_requires='>=3.10',
     install_requires=[
         'aio-pika>=9.4.1',
         'curl_cffi>=0.6.2',
