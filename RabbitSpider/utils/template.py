@@ -23,18 +23,21 @@ def template_to_file(_path, **kwargs):
         return
     try:
         shutil.copytree(settings.get('TEMPLATE_DIR'), _path)
-    except Exception:
-        print(f'{_path}目录已存在')
-    else:
-        for file in tmpl_file_path(_path):
-            with open(file, 'r', encoding='utf-8') as f:
-                text = Template(f.read()).substitute(**kwargs)
-            with open(file.replace('tmpl', 'py'), 'w', encoding='utf-8') as f:
-                f.write(text)
-            os.remove(file)
-        os.rename(os.path.join(_path, 'spiders', 'basic.py'),
-                  os.path.join(_path, 'spiders', f'{kwargs["spider"].lower()}.py'))
-        print(f'{_path}创建完成')
+    except FileExistsError:
+        if os.path.exists(os.path.join(_path, 'spiders', f'{kwargs["spider"].lower()}.py')):
+            print(f'{kwargs["project"]}/spiders/{kwargs["spider"]}已存在')
+            return
+        shutil.copy(os.path.abspath(os.path.join(settings.get('TEMPLATE_DIR'), 'spiders/basic.tmpl')),
+                    os.path.join(_path, 'spiders'))
+    for file in tmpl_file_path(_path):
+        with open(file, 'r', encoding='utf-8') as f:
+            text = Template(f.read()).substitute(**kwargs)
+        with open(file.replace('tmpl', 'py'), 'w', encoding='utf-8') as f:
+            f.write(text)
+        os.remove(file)
+    os.rename(os.path.join(_path, 'spiders', 'basic.py'),
+              os.path.join(_path, 'spiders', f'{kwargs["spider"].lower()}.py'))
+    print(f'{_path}创建完成')
 
 
 def create_project():
