@@ -6,7 +6,7 @@ vue搭建的爬虫web管理，支持部署任务（基于crontab定时），实�
 
 使用curl_cffi封装的下载器，支持修改http版本，tls指纹
 
-pip install RabbitSpider==2.6.2
+pip install RabbitSpider==2.6.4
 
 创建项目命令：
     rabbit create [项目名称] [爬虫文件名称]
