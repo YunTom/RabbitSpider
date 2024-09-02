@@ -1,0 +1,6 @@
+import asyncio
+from ${project}.spiders.${spider} import ${classname}
+from RabbitSpider.rabbit_execute import go, batch_go
+
+# asyncio.run(go(${classname}, 'auto', 10))
+asyncio.run(batch_go([${classname}], 'auto', 10))
