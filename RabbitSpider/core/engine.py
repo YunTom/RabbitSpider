@@ -102,7 +102,6 @@ class Engine(object):
     async def consume(self):
         while True:
             try:
-                future = asyncio.Future()
                 await self.__scheduler.consumer(self.__channel, queue=self.name, callback=self.deal_resp,
                                                 prefetch=self.__task_count)
             except ChannelClosed:
@@ -110,7 +109,7 @@ class Engine(object):
                 self.logger.warning('rabbitmq重新连接')
                 self.__connection, self.__channel = await self.__scheduler.connect()
                 continue
-            await future
+            await asyncio.Future()
 
     async def deal_resp(self, incoming_message: IncomingMessage):
         ret = pickle.loads(incoming_message.body)
