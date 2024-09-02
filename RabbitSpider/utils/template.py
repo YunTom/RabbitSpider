@@ -47,4 +47,4 @@ def create_project():
     parser.add_argument('project', help='参数：项目名称')
     parser.add_argument('spider', help='参数：文件名称')
     args = parser.parse_args()
-    template_to_file(f'./{args.project}', _file=f'{args.spider}')
+    template_to_file(f'{args.project}', _file=f'{args.spider}')
