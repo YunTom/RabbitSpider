@@ -4,7 +4,7 @@ from RabbitSpider import Request
 from RabbitSpider.rabbit_execute import go
 
 
-class ${spider}(Engine):
+class ${classname}(Engine):
     name = os.path.basename(__file__)
     custom_settings = {}
 
@@ -16,4 +16,4 @@ class ${spider}(Engine):
 
 
 if __name__ == '__main__':
-    asyncio.run(go(${spider}, 'auto', 10))
+    asyncio.run(go(${spider}, 'auto', 1))
