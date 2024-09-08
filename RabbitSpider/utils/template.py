@@ -34,8 +34,8 @@ def template_to_file(_path, _dir, _file):
                     os.path.join(_path, 'spiders', _dir))
     for file in tmpl_file_path(_path):
         with open(file, 'r', encoding='utf-8') as f:
-            text = Template(f.read()).substitute(bot_dir=os.path.abspath(f'./{_path}'), project=_path, spider=_file,
-                                                 classname=_file.capitalize())
+            text = Template(f.read()).substitute(bot_dir=os.path.abspath(f'./{_path}'), project=_path, dir=_dir,
+                                                 spider=_file, classname=_file.capitalize())
         with open(file.replace('tmpl', 'py'), 'w', encoding='utf-8') as f:
             f.write(text)
         os.remove(file)
