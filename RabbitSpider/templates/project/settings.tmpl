@@ -1,5 +1,7 @@
 from curl_cffi import CurlHttpVersion
 
+BOT_DIR = '${bot_dir}'
+
 # Rabbitmq
 RABBIT_HOST = '127.0.0.1'
 RABBIT_PORT = 5672
@@ -7,19 +9,19 @@ RABBIT_USERNAME = 'yuntom'
 RABBIT_PASSWORD = '123456'
 RABBIT_VIRTUAL_HOST = '/'
 
-# redis 去重
-# DUPEFILTER_CLASS = 'RabbitSpider.dupefilters.redisfilter.RedisFilter'
+
+#Redis
 # REDIS_HOST = '127.0.0.1'
 # REDIS_PORT = 6379
 # REDIS_PASSWORD = None
 # REDIS_DB = 1
 
+
+# redis 去重
+# DUPEFILTER_CLASS = 'RabbitSpider.dupefilters.redisfilter.RedisFilter'
+
 # 内存 去重
 DUPEFILTER_CLASS = 'RabbitSpider.dupefilters.memoryfilter.MemoryFilter'
-
-# 日志
-LOG_LEVEL = 'WARNING'
-LOG_FILE = './rabbit_log'
 
 # 中间件
 MIDDLEWARES = [
@@ -32,13 +34,17 @@ MIDDLEWARES = [
 # 管道
 ITEM_PIPELINES = ['${project}.pipelines.Pipeline']
 
-# 延时下载
-# DOWNLOAD_DELAY = (1, 3)
-
 # http版本
 HTTP_VERSION = CurlHttpVersion.V1_0
 # tls指纹
 IMPERSONATE = 'chrome120'
+
+# 日志
+LOG_LEVEL = 'WARNING'
+LOG_FILE = './rabbit_log'
+
+# 延时下载
+# DOWNLOAD_DELAY = (1, 3)
 
 # 最大重试次数
 MAX_RETRY = 5

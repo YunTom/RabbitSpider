@@ -1,5 +1,3 @@
-import os
-import sys
 import pickle
 import asyncio
 from traceback import print_exc
@@ -20,9 +18,8 @@ from aio_pika.exceptions import QueueEmpty, ChannelClosed, ChannelNotFoundEntity
 
 
 class Engine(object):
-    name = os.path.basename(sys.argv[0])
-    queue_name = '/'.join(os.path.abspath(name).rsplit('\\', 2)[-2:])
-    custom_settings = {}
+    name: str
+    custom_settings: dict = {}
 
     def __init__(self, task_count):
         self.session = None
@@ -30,12 +27,12 @@ class Engine(object):
         self.__channel = None
         self.__task_count = task_count
         self.settings = SettingManager(self.custom_settings)
-        self.logger = Logger(self)
         self.__scheduler = Scheduler(self.settings)
         self.__filter = FilterManager(self.settings)
         self.__task_manager = TaskManager(self.__task_count)
         self.__middlewares = MiddlewareManager.create_instance(self)
         self.__pipelines = PipelineManager.create_instance(self)
+        self.logger = Logger(self.settings, self.name)
 
     async def start_requests(self):
         """初始请求"""
@@ -50,7 +47,7 @@ class Engine(object):
             if isinstance(res, Request):
                 if self.__filter.request_seen(res):
                     self.logger.info(f'生产数据：{res.to_dict()}')
-                    await self.__scheduler.producer(self.__channel, queue=self.queue_name, body=res.to_dict())
+                    await self.__scheduler.producer(self.__channel, queue=self.name, body=res.to_dict())
             elif isinstance(res, BaseItem):
                 await self.__pipelines.process_item(res)
 
@@ -72,7 +69,7 @@ class Engine(object):
 
     async def produce(self):
         try:
-            await self.__scheduler.queue_purge(self.__channel, self.queue_name)
+            await self.__scheduler.queue_purge(self.__channel, self.name)
             await self.routing(self.start_requests())
         except Exception as e:
             self.logger.error(f'{e}')
@@ -83,10 +80,10 @@ class Engine(object):
     async def crawl(self):
         while True:
             try:
-                incoming_message: IncomingMessage = await self.__scheduler.consumer(self.__channel, self.queue_name)
+                incoming_message: IncomingMessage = await self.__scheduler.consumer(self.__channel, self.name)
             except QueueEmpty:
                 if self.__task_manager.all_done():
-                    await self.__scheduler.delete_queue(self.__channel, self.queue_name)
+                    await self.__scheduler.delete_queue(self.__channel, self.name)
                     break
                 else:
                     continue
@@ -103,7 +100,7 @@ class Engine(object):
     async def consume(self):
         while True:
             try:
-                await self.__scheduler.consumer(self.__channel, queue=self.queue_name, callback=self.deal_resp,
+                await self.__scheduler.consumer(self.__channel, queue=self.name, callback=self.deal_resp,
                                                 prefetch=self.__task_count)
             except ChannelClosed:
                 await asyncio.sleep(1)
@@ -134,7 +131,7 @@ class Engine(object):
         self.logger.info(f'{self.name}任务开始')
         self.__connection, self.__channel = await self.__scheduler.connect()
         self.session = await self.__middlewares.download.new_session()
-        await self.__scheduler.create_queue(self.__channel, self.queue_name)
+        await self.__scheduler.create_queue(self.__channel, self.name)
         await self.__pipelines.open_spider()
         if mode == 'auto':
             await self.produce()

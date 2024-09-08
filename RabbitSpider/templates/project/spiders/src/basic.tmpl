@@ -1,11 +1,11 @@
-import os, asyncio
+import asyncio
 from RabbitSpider import Engine
 from RabbitSpider import Request
 from RabbitSpider.rabbit_execute import go
 
 
 class ${classname}(Engine):
-    name = os.path.basename(__file__)
+    name = '_'.join(__file__.rsplit('\\')[-2:]).split('.')[0]
     custom_settings = {}
 
     async def start_requests(self):
