@@ -13,11 +13,11 @@ class Logger(object):
                        level=settings.get('LOG_LEVEL', 'ERROR'),
                        rotation="1 day",
                        retention="1 week",
-                       format="{time:YYYY-MM-DD HH:mm:ss} | {level} | {extra[scope]} | {name}:{line} - {message}")
+                       format="{time:YYYY-MM-DD HH:mm:ss} | {level} | {extra[scope]} | {message}")
         else:
             logger.add(sink=sys.stderr,
                        level=settings.get('LOG_LEVEL', 'ERROR'),
-                       format="{time:YYYY-MM-DD HH:mm:ss} | {level} | {extra[scope]} | {name}:{line} - {message}")
+                       format="{time:YYYY-MM-DD HH:mm:ss} | {level} | {extra[scope]} | {message}")
         self.logger = logger.bind(scope=name)
 
     def info(self, msg):
