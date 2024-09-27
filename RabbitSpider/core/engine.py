@@ -146,4 +146,4 @@ class Engine(object):
         await self.__channel.close()
         await self.__connection.close()
         await self.__middlewares.download.exit(self.session)
-        self.logger.info(f'{self.name}任务完成')
+        self.logger.info(f'{self.name}任务结束')

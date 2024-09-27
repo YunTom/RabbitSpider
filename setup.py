@@ -2,7 +2,7 @@ import setuptools
 
 setuptools.setup(
     name='RabbitSpider',
-    version='2.6.6',
+    version='2.6.8',
     author='一纸',
     author_email='2395396520@qq.com',
     url='https://github.com/YunTom/RabbitSpider/tree/master',

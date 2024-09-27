@@ -9,10 +9,20 @@ from traceback import print_exc
 from signal import signal, SIGINT, SIGTERM
 from RabbitSpider.utils.control import TaskManager
 
+logo = r"""
+    ____             __      __      _    __    _____             _        __              
+   / __ \  ____ _   / /_    / /_    (_)  / /_  / ___/    ____    (_)  ____/ /  ___    _____
+  / /_/ / / __ `/  / __ \  / __ \  / /  / __/  \__ \    / __ \  / /  / __  /  / _ \  / ___/
+ / _, _/ / /_/ /  / /_/ / / /_/ / / /  / /_   ___/ /   / /_/ / / /  / /_/ /  /  __/ / /    
+/_/ |_|  \__,_/  /_.___/ /_.___/ /_/   \__/  /____/   / .___/ /_/   \__,_/   \___/ /_/     
+                                                     /_/                                   
+"""
+
 
 async def main(spider, mode, task_count):
     try:
         rabbit = spider(task_count)
+        sys.stdout.write(f'\033[0;35;1m{logo}\033[0m')
     except Exception:
         print_exc()
         raise
