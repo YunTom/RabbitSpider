@@ -1,4 +1,5 @@
 import os
+import sys
 from loguru import logger
 
 
@@ -13,9 +14,11 @@ class Logger(object):
                        rotation="1 day",
                        retention="1 week",
                        format="{time:YYYY-MM-DD HH:mm:ss} | {level} | {extra[scope]} | {name}:{line} - {message}")
-            self.logger = logger.bind(scope=name)
         else:
-            self.logger = logger
+            logger.add(sink=sys.stderr,
+                       level=settings.get('LOG_LEVEL', 'ERROR'),
+                       format="{time:YYYY-MM-DD HH:mm:ss} | {level} | {extra[scope]} | {name}:{line} - {message}")
+        self.logger = logger.bind(scope=name)
 
     def info(self, msg):
         self.logger.info(msg)
