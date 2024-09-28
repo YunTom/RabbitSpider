@@ -2,13 +2,15 @@ import pickle
 import asyncio
 from traceback import print_exc
 from aio_pika import IncomingMessage
-from RabbitSpider.http.request import Request
-from RabbitSpider.http.response import Response
+from RabbitSpider import Request
+from RabbitSpider import Response
 from RabbitSpider.utils.control import TaskManager
 from RabbitSpider.utils.control import SettingManager
 from RabbitSpider.utils.control import PipelineManager
 from RabbitSpider.utils.control import MiddlewareManager
 from RabbitSpider.utils.control import FilterManager
+from RabbitSpider.utils.subscriber import Subscriber
+from RabbitSpider.utils.event import *
 from RabbitSpider.utils.exceptions import RabbitExpect
 from RabbitSpider.utils.log import Logger
 from RabbitSpider.items.item import BaseItem
@@ -33,14 +35,29 @@ class Engine(object):
         self.__middlewares = MiddlewareManager.create_instance(self)
         self.__pipelines = PipelineManager.create_instance(self)
         self.logger = Logger(self.settings, self.name)
+        self.subscriber = Subscriber.create_instance()
 
     async def start_requests(self):
         """初始请求"""
-        pass
+        raise NotImplementedError
 
     async def parse(self, request: Request, response: Response):
         """默认回调"""
         pass
+
+    def __bind_event(self):
+        self.subscriber.subscribe(self.spider_opened, spider_opened)
+        self.subscriber.subscribe(self.spider_closed, spider_closed)
+        self.subscriber.subscribe(self.spider_error, spider_error)
+
+    def spider_opened(self, *args, **kwargs):
+        pass
+
+    def spider_closed(self, *args, **kwargs):
+        pass
+
+    def spider_error(self, exc, *args, **kwargs):
+        raise exc
 
     async def routing(self, result):
         async def rule(res):
@@ -74,8 +91,7 @@ class Engine(object):
         except Exception as e:
             self.logger.error(f'{e}')
             print_exc()
-            for task in asyncio.all_tasks():
-                task.cancel()
+            raise RabbitExpect(e)
 
     async def crawl(self):
         while True:
@@ -122,28 +138,39 @@ class Engine(object):
             except Exception as e:
                 self.logger.error(f'解析失败：{e}')
                 print_exc()
-                for task in asyncio.all_tasks():
-                    task.cancel()
+                raise RabbitExpect(e)
             else:
                 await incoming_message.ack()
 
-    async def run(self, mode):
-        self.logger.info(f'{self.name}任务开始')
+    async def __open_spider(self):
+        self.__bind_event()
         self.__connection, self.__channel = await self.__scheduler.connect()
         self.session = await self.__middlewares.download.new_session()
         await self.__scheduler.create_queue(self.__channel, self.name)
         await self.__pipelines.open_spider()
-        if mode == 'auto':
-            await self.produce()
-            await self.crawl()
-        elif mode == 'm':
-            await self.produce()
-        elif mode == 'w':
-            await self.consume()
-        else:
-            raise RabbitExpect('执行模式错误！')
+        self.subscriber.notify(spider_opened, self.spider_opened, self)
+
+    async def __close_spider(self):
         await self.__pipelines.close_spider()
         await self.__channel.close()
         await self.__connection.close()
         await self.__middlewares.download.exit(self.session)
-        self.logger.info(f'{self.name}任务结束')
+        self.subscriber.notify(spider_closed, self.spider_closed, self)
+
+    async def run(self, mode):
+        try:
+            self.logger.info(f'{self.name}任务开始')
+            await self.__open_spider()
+            if mode == 'auto':
+                await self.produce()
+                await self.crawl()
+            elif mode == 'm':
+                await self.produce()
+            elif mode == 'w':
+                await self.consume()
+            else:
+                raise RabbitExpect('执行模式错误！')
+            await self.__close_spider()
+            self.logger.info(f'{self.name}任务结束')
+        except Exception as e:
+            self.subscriber.notify(spider_error, self.spider_error(e))
