@@ -12,7 +12,7 @@ class Subscriber(object):
     def unsubscribe(self, receiver: Callable, event: str):
         self._subscriber[event].discard(receiver)
 
-    async def notify(self, event: str, *args, **kwargs):
+    def notify(self, event: str, *args, **kwargs):
         for receiver in self._subscriber[event]:
             receiver(*args, **kwargs)
 
