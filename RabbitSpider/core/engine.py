@@ -45,11 +45,6 @@ class Engine(object):
         """默认回调"""
         pass
 
-    def __bind_event(self):
-        self.subscriber.subscribe(self.spider_opened, spider_opened)
-        self.subscriber.subscribe(self.spider_closed, spider_closed)
-        self.subscriber.subscribe(self.spider_error, spider_error)
-
     def spider_opened(self, *args, **kwargs):
         pass
 
@@ -143,7 +138,9 @@ class Engine(object):
                 await incoming_message.ack()
 
     async def __open_spider(self):
-        self.__bind_event()
+        self.subscriber.subscribe(self.spider_opened, spider_opened)
+        self.subscriber.subscribe(self.spider_closed, spider_closed)
+        self.subscriber.subscribe(self.spider_error, spider_error)
         self.__connection, self.__channel = await self.__scheduler.connect()
         self.session = await self.__middlewares.download.new_session()
         await self.__scheduler.create_queue(self.__channel, self.name)
