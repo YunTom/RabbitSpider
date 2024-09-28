@@ -1,6 +1,6 @@
 import pickle
 import asyncio
-from traceback import print_exc
+from asyncio import CancelledError
 from aio_pika import IncomingMessage
 from RabbitSpider import Request
 from RabbitSpider import Response
@@ -56,8 +56,8 @@ class Engine(object):
     def spider_closed(self, *args, **kwargs):
         pass
 
-    def spider_error(self, exc, *args, **kwargs):
-        raise exc
+    def spider_error(self, *args, **kwargs):
+        pass
 
     async def routing(self, result):
         async def rule(res):
@@ -90,8 +90,8 @@ class Engine(object):
             await self.routing(self.start_requests())
         except Exception as e:
             self.logger.error(f'{e}')
-            print_exc()
-            raise RabbitExpect(e)
+            for task in asyncio.all_tasks():
+                task.cancel()
 
     async def crawl(self):
         while True:
@@ -137,8 +137,8 @@ class Engine(object):
                     await self.routing(result)
             except Exception as e:
                 self.logger.error(f'解析失败：{e}')
-                print_exc()
-                raise RabbitExpect(e)
+                for task in asyncio.all_tasks():
+                    task.cancel()
             else:
                 await incoming_message.ack()
 
@@ -172,5 +172,7 @@ class Engine(object):
                 raise RabbitExpect('执行模式错误！')
             await self.__close_spider()
             self.logger.info(f'{self.name}任务结束')
-        except Exception as e:
-            self.subscriber.notify(spider_error, self.spider_error(e))
+        except CancelledError as exc:
+            self.subscriber.notify(spider_error, self.spider_error, exc)
+        except Exception as exc:
+            self.subscriber.notify(spider_error, self.spider_error, exc)
