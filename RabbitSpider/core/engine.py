@@ -36,6 +36,9 @@ class Engine(object):
         self.__pipelines = PipelineManager.create_instance(self)
         self.logger = Logger(self.settings, self.name)
         self.subscriber = Subscriber.create_instance()
+        self.subscriber.subscribe(self.spider_opened, spider_opened)
+        self.subscriber.subscribe(self.spider_closed, spider_closed)
+        self.subscriber.subscribe(self.spider_error, spider_error)
 
     async def start_requests(self):
         """初始请求"""
@@ -138,9 +141,6 @@ class Engine(object):
                 await incoming_message.ack()
 
     async def __open_spider(self):
-        self.subscriber.subscribe(self.spider_opened, spider_opened)
-        self.subscriber.subscribe(self.spider_closed, spider_closed)
-        self.subscriber.subscribe(self.spider_error, spider_error)
         self.__connection, self.__channel = await self.__scheduler.connect()
         self.session = await self.__middlewares.download.new_session()
         await self.__scheduler.create_queue(self.__channel, self.name)
