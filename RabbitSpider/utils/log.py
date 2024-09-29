@@ -18,13 +18,13 @@ class Logger(object):
             logger.add(sink=sys.stderr,
                        level=settings.get('LOG_LEVEL', 'ERROR'),
                        format="{time:YYYY-MM-DD HH:mm:ss} | {level} | {extra[scope]} | {message}")
-        self.logger = logger.bind(scope=name)
+        self._logger = logger.bind(scope=name)
 
     def info(self, msg):
-        self.logger.info(msg)
+        self._logger.info(msg)
 
     def warning(self, msg):
-        self.logger.warning(msg)
+        self._logger.warning(msg)
 
     def error(self, msg):
-        self.logger.error(msg)
+        self._logger.error(msg)

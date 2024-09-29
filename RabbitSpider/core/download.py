@@ -9,13 +9,13 @@ class CurlDownload(object):
         self.http_version = http_version
 
     @staticmethod
-    async def new_session():
+    def new_session():
         session = AsyncSession(verify=False)
         return session
 
     @staticmethod
-    async def exit(session):
-        await session.close()
+    def exit(session):
+        session.close()
 
     async def fetch(self, session, request):
         if request['method'].upper() == 'GET':

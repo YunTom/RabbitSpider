@@ -34,7 +34,7 @@ async def call_function(func, *args, **kwargs):
 
 
 class SettingManager(object):
-    def __init__(self, custom_settings: dict):
+    def __init__(self):
         try:
             settings = import_module('settings')
         except ModuleNotFoundError:
@@ -43,7 +43,6 @@ class SettingManager(object):
         for key in dir(settings):
             if key.isupper():
                 self.attribute[key] = getattr(settings, key)
-        self.attribute.update(custom_settings)
 
     def __setitem__(self, key, value):
         self.attribute[key] = value
@@ -62,6 +61,9 @@ class SettingManager(object):
 
     def set(self, key, value):
         self[key] = value
+
+    def set_dict(self, custom_settings):
+        self.attribute.update(custom_settings)
 
 
 class TaskManager(object):
@@ -85,10 +87,10 @@ class TaskManager(object):
 
 
 class PipelineManager(object):
-    def __init__(self, spider):
+    def __init__(self, spider,settings):
         self.spider = spider
         self.methods: Dict[str, List[Callable]] = defaultdict(list)
-        self._add_pipe(spider.settings.getlist('ITEM_PIPELINES'))
+        self._add_pipe(settings.getlist('ITEM_PIPELINES'))
 
     def _add_pipe(self, pipelines):
         for pipeline in pipelines:
@@ -113,20 +115,22 @@ class PipelineManager(object):
             await call_function(method, self.spider)
 
     @classmethod
-    def create_instance(cls, spider):
-        return cls(spider)
+    def create_instance(cls, spider,settings):
+        return cls(spider,settings)
 
 
 class MiddlewareManager(object):
-    def __init__(self, spider):
+    def __init__(self, spider,settings):
         self.spider = spider
-        self.download = CurlDownload(spider.settings.get('HTTP_VERSION'), spider.settings.get('IMPERSONATE'))
+        self.settings=settings
+        self.download = CurlDownload(settings.get('HTTP_VERSION'), settings.get('IMPERSONATE'))
+        self.session = self.download.new_session()
         self.methods: Dict[str, List[Callable]] = defaultdict(list)
-        self._add_middleware(spider.settings.getlist('MIDDLEWARES'))
+        self._add_middleware(settings.getlist('MIDDLEWARES'))
 
     def _add_middleware(self, middlewares):
         for middleware in middlewares:
-            middleware_obj = load_class(middleware).create_instance(self.spider)
+            middleware_obj = load_class(middleware).create_instance(self.spider,self.settings)
             if hasattr(middleware_obj, 'process_request'):
                 self.methods['process_request'].append(getattr(middleware_obj, 'process_request'))
             if hasattr(middleware_obj, 'process_response'):
@@ -142,7 +146,7 @@ class MiddlewareManager(object):
             if result:
                 break
         else:
-            return await self.download.fetch(self.spider.session, request.to_dict())
+            return await self.download.fetch(self.session, request.to_dict())
 
     async def _process_response(self, request, response):
         for method in reversed(self.methods['process_response']):
@@ -176,8 +180,8 @@ class MiddlewareManager(object):
         return request, resp
 
     @classmethod
-    def create_instance(cls, spider):
-        return cls(spider)
+    def create_instance(cls, spider,settings):
+        return cls(spider,settings)
 
 
 class FilterManager(object):
