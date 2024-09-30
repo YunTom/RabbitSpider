@@ -7,7 +7,7 @@ setuptools.setup(
     author_email='2395396520@qq.com',
     url='https://github.com/YunTom/RabbitSpider/tree/master',
     packages=['RabbitSpider', 'RabbitSpider.core', 'RabbitSpider.dupefilters', 'RabbitSpider.http',
-              'RabbitSpider.spider''RabbitSpider.items', 'RabbitSpider.middlewares', 'RabbitSpider.pipelines',
+              'RabbitSpider.spider', 'RabbitSpider.items', 'RabbitSpider.middlewares', 'RabbitSpider.pipelines',
               'RabbitSpider.utils'],
     include_package_data=True,
     entry_points={
