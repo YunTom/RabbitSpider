@@ -1,6 +1,6 @@
 import asyncio
-from RabbitSpider.rabbit_execute import go, batch_go
-from ${project}.spiders.${dir}.${spider} import ${classname}
+from RabbitSpider import go, batch_go
+from ${project}.spiders.${dir}.${spider} import ${classname}Spider
 
-# asyncio.run(go(${classname}, 'auto', 10))
-asyncio.run(batch_go([${classname}], 'auto', 10))
+# asyncio.run(go(${classname}Spider, 'auto', 10))
+asyncio.run(batch_go([${classname}Spider], 'auto', 10))
