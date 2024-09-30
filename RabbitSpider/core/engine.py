@@ -105,7 +105,7 @@ class Engine(object):
         if response:
             try:
                 callback = getattr(self.spider, ret['callback'])
-                result = await callback(request, response)
+                result = callback(request, response)
                 if result:
                     await self.routing(result)
             except Exception as e:
