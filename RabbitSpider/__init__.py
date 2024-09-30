@@ -3,6 +3,7 @@ import os
 import sys
 from RabbitSpider.http.request import Request
 from RabbitSpider.http.response import Response
+from RabbitSpider.rabbit_execute import go, batch_go
 
 if sys.platform == 'win32':
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())

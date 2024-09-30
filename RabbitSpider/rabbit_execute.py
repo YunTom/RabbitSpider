@@ -2,36 +2,47 @@ import asyncio
 import sys
 from typing import Type, List
 from traceback import print_exc
-from RabbitSpider.utils.control import TaskManager
+from RabbitSpider.core.download import CurlDownload
+from RabbitSpider.core.scheduler import Scheduler
 from RabbitSpider.core.engine import Engine
 from RabbitSpider.spider import Spider
 from RabbitSpider.utils import event
 from RabbitSpider.utils.subscriber import Subscriber
 from RabbitSpider.utils.control import SettingManager
 from asyncio.exceptions import CancelledError
+from RabbitSpider.utils.control import TaskManager, PipelineManager, FilterManager
 
 
 class Crawler(object):
     def __init__(self, spider: Type[Spider], mode: str, task_count: int):
-        self.settings = SettingManager()
-        self.spider = spider()
         self.mode = mode
         self.task_count = task_count
-        self.spider.update_settings(self.settings)
+        self.settings = SettingManager()
         self.subscriber = Subscriber.create_instance()
-        self.engine = Engine(self)
+        self.spider = spider(self)
+        self.scheduler = Scheduler(self.settings)
+        self.filter = FilterManager(self.settings)
+        self.pipelines = PipelineManager.create_instance(self)
+        self.task_manager = TaskManager(self.task_count)
+        self.download = CurlDownload.create_instance(self)
 
     async def process(self):
-        self.spider.bind_event(self)
+        self.spider.logger.info(f'任务{self.spider.name}启动')
         self.subscriber.notify(event.spider_opened, self.spider)
         try:
-            await self.engine.start()
-        except CancelledError:
-            self.subscriber.notify(event.spider_error, self.spider)
-        except Exception:
-            self.subscriber.notify(event.spider_error, self.spider)
+            async with Engine(self) as engine:
+                await engine.start()
+        except CancelledError as exc:
+            self.spider.logger.error(exc)
+            print_exc()
+            self.subscriber.notify(event.spider_error, self.spider, exc)
+        except Exception as exc:
+            self.spider.logger.error(exc)
+            print_exc()
+            self.subscriber.notify(event.spider_error, self.spider, exc)
         else:
             self.subscriber.notify(event.spider_closed, self.spider)
+            self.spider.logger.info(f'任务{self.spider.name}结束')
 
 
 async def main(spider, mode, task_count):
@@ -43,7 +54,7 @@ async def main(spider, mode, task_count):
         raise
 
 
-async def go(spider: Type, mode: str = 'auto', task_count: int = 1):
+async def go(spider: Type[Spider], mode: str = 'auto', task_count: int = 1):
     for i in sys.argv[1:]:
         key, value = i.split('=')
         if key == 'mode':
@@ -53,7 +64,7 @@ async def go(spider: Type, mode: str = 'auto', task_count: int = 1):
     await main(spider, mode=mode, task_count=task_count)
 
 
-async def batch_go(spiders: List[Type], mode: str = 'auto', task_pool: int = 10):
+async def batch_go(spiders: List[Type[Spider]], mode: str = 'auto', task_pool: int = 10):
     task_manager = TaskManager(task_pool)
     for spider in spiders:
         await task_manager.semaphore.acquire()

@@ -7,8 +7,13 @@ class Spider(object):
     name: str
     custom_settings: dict = {}
 
-    def __init__(self):
-        pass
+    def __init__(self, crawler):
+        crawler.settings.set_dict(self.custom_settings)
+        crawler.subscriber.subscribe(self.spider_opened, event.spider_opened)
+        crawler.subscriber.subscribe(self.spider_closed, event.spider_closed)
+        crawler.subscriber.subscribe(self.spider_error, event.spider_error)
+        crawler.subscriber.subscribe(self.spider_item, event.spider_item)
+        self.logger = Logger(crawler.settings, self.name)
 
     async def start_requests(self):
         """初始请求"""
@@ -18,22 +23,14 @@ class Spider(object):
         """默认回调"""
         pass
 
-    def spider_opened(self, *args, **kwargs):
+    async def spider_opened(self, *args, **kwargs):
         pass
 
-    def spider_closed(self, *args, **kwargs):
+    async def spider_closed(self, *args, **kwargs):
         pass
 
-    def spider_error(self, *args, **kwargs):
+    async def spider_error(self, *args, **kwargs):
         pass
 
-    @classmethod
-    def update_settings(cls, settings):
-        settings.set_dict(cls.custom_settings)
-        cls.logger = Logger(settings, cls.name)
-
-    @classmethod
-    def bind_event(cls, crawler):
-        crawler.subscriber.subscribe(cls.spider_opened, event.spider_opened)
-        crawler.subscriber.subscribe(cls.spider_closed, event.spider_closed)
-        crawler.subscriber.subscribe(cls.spider_error, event.spider_error)
+    async def spider_item(self, *args, **kwargs):
+        pass

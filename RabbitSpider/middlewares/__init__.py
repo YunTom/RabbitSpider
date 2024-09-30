@@ -3,7 +3,7 @@ from RabbitSpider import Response
 
 
 class BaseMiddleware:
-    def __init__(self, spider, settings):
+    def __init__(self, crawler):
         pass
 
     async def process_request(self, request, spider) -> None | Request | Response:
@@ -19,5 +19,5 @@ class BaseMiddleware:
         pass
 
     @classmethod
-    def create_instance(cls, spider, settings):
-        return cls(spider, settings)
+    def create_instance(cls, crawler):
+        return cls(crawler)

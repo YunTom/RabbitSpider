@@ -1,13 +1,11 @@
 import asyncio
 from collections import defaultdict
 from importlib import import_module
-from inspect import iscoroutinefunction
 from typing import Final, Dict, List, Callable
 from asyncio import Task, Future, Semaphore
 from RabbitSpider import Request
 from RabbitSpider import Response
 from RabbitSpider import default_settings
-from RabbitSpider.core.download import CurlDownload
 
 
 def load_class(_path):
@@ -24,13 +22,6 @@ def load_class(_path):
         raise NameError(f"Module {module!r} doesn't define any project named {name!r}")
 
     return cls
-
-
-async def call_function(func, *args, **kwargs):
-    if iscoroutinefunction(func):
-        return await func(*args, **kwargs)
-    else:
-        return func(*args, **kwargs)
 
 
 class SettingManager(object):
@@ -87,50 +78,30 @@ class TaskManager(object):
 
 
 class PipelineManager(object):
-    def __init__(self, spider,settings):
-        self.spider = spider
+    def __init__(self, crawler):
+        self.crawler = crawler
+        self.spider = crawler.spider
         self.methods: Dict[str, List[Callable]] = defaultdict(list)
-        self._add_pipe(settings.getlist('ITEM_PIPELINES'))
+        self._add_pipe(crawler.settings.getlist('ITEM_PIPELINES'))
 
     def _add_pipe(self, pipelines):
         for pipeline in pipelines:
-            pipeline_obj = load_class(pipeline).create_instance(self.spider)
-            if hasattr(pipeline_obj, 'open_spider'):
-                self.methods['open_spider'].append(getattr(pipeline_obj, 'open_spider'))
-            if hasattr(pipeline_obj, 'process_item'):
-                self.methods['process_item'].append(getattr(pipeline_obj, 'process_item'))
-            if hasattr(pipeline_obj, 'close_spider'):
-                self.methods['close_spider'].append(getattr(pipeline_obj, 'close_spider'))
-
-    async def open_spider(self):
-        for method in self.methods['open_spider']:
-            await call_function(method, self.spider)
-
-    async def process_item(self, req):
-        for method in self.methods['process_item']:
-            await call_function(method, req, self.spider)
-
-    async def close_spider(self):
-        for method in self.methods['close_spider']:
-            await call_function(method, self.spider)
+            load_class(pipeline).create_instance(self.crawler)
 
     @classmethod
-    def create_instance(cls, spider,settings):
-        return cls(spider,settings)
+    def create_instance(cls, crawler):
+        return cls(crawler)
 
 
 class MiddlewareManager(object):
-    def __init__(self, spider,settings):
-        self.spider = spider
-        self.settings=settings
-        self.download = CurlDownload(settings.get('HTTP_VERSION'), settings.get('IMPERSONATE'))
-        self.session = self.download.new_session()
+    def __init__(self, crawler):
+        self.crawler = crawler
         self.methods: Dict[str, List[Callable]] = defaultdict(list)
-        self._add_middleware(settings.getlist('MIDDLEWARES'))
+        self._add_middleware(self.crawler.settings.getlist('MIDDLEWARES'))
 
     def _add_middleware(self, middlewares):
         for middleware in middlewares:
-            middleware_obj = load_class(middleware).create_instance(self.spider,self.settings)
+            middleware_obj = load_class(middleware).create_instance(self.crawler)
             if hasattr(middleware_obj, 'process_request'):
                 self.methods['process_request'].append(getattr(middleware_obj, 'process_request'))
             if hasattr(middleware_obj, 'process_response'):
@@ -138,19 +109,19 @@ class MiddlewareManager(object):
             if hasattr(middleware_obj, 'process_exception'):
                 self.methods['process_exception'].append(getattr(middleware_obj, 'process_exception'))
 
-    async def _process_request(self, request):
+    async def process_request(self, fetch, request):
         for method in self.methods['process_request']:
-            result = await call_function(method, request, self.spider)
+            result = await method(request, self.crawler.spider)
             if isinstance(result, (Request, Response)):
                 return result
             if result:
                 break
         else:
-            return await self.download.fetch(self.session, request.to_dict())
+            return await fetch(request.to_dict())
 
-    async def _process_response(self, request, response):
+    async def process_response(self, request, response):
         for method in reversed(self.methods['process_response']):
-            result = await call_function(method, request, response, self.spider)
+            result = await method(request, response, self.crawler.spider)
             if isinstance(result, (Request, Response)):
                 return result
             if result:
@@ -158,9 +129,9 @@ class MiddlewareManager(object):
         else:
             return response
 
-    async def _process_exception(self, request, exc):
+    async def process_exception(self, request, exc):
         for method in self.methods['process_exception']:
-            result = await call_function(method, request, exc, self.spider)
+            result = await method(request, exc, self.crawler.spider)
             if isinstance(result, (Request, Response)):
                 return result
             if result:
@@ -168,20 +139,9 @@ class MiddlewareManager(object):
         else:
             raise exc
 
-    async def downloader(self, request: Request):
-        try:
-            resp = await self._process_request(request)
-        except Exception as exc:
-            resp = await self._process_exception(request, exc)
-        if isinstance(resp, Response):
-            resp = await self._process_response(request, resp)
-        if isinstance(resp, Request):
-            resp = await self.spider.routing(resp)
-        return request, resp
-
     @classmethod
-    def create_instance(cls, spider,settings):
-        return cls(spider,settings)
+    def create_instance(cls, crawler):
+        return cls(crawler)
 
 
 class FilterManager(object):

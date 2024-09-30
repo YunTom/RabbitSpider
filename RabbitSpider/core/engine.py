@@ -2,13 +2,9 @@ import pickle
 import asyncio
 from aio_pika import IncomingMessage
 from RabbitSpider import Request
-from RabbitSpider.utils.control import TaskManager
-from RabbitSpider.utils.control import PipelineManager
-from RabbitSpider.utils.control import MiddlewareManager
-from RabbitSpider.utils.control import FilterManager
-from RabbitSpider.utils.exceptions import RabbitExpect
 from RabbitSpider.items.item import BaseItem
-from RabbitSpider.core.scheduler import Scheduler
+from RabbitSpider.utils import event
+from RabbitSpider.utils.exceptions import RabbitExpect
 from collections.abc import AsyncGenerator, Coroutine, Generator
 from aio_pika.exceptions import QueueEmpty, ChannelClosed, ChannelNotFoundEntity
 
@@ -20,13 +16,21 @@ class Engine(object):
         self.channel = None
         self.mode = crawler.mode
         self.spider = crawler.spider
+        self.subscriber = crawler.subscriber
         self.task_count = crawler.task_count
-        self.settings = crawler.settings
-        self.scheduler = Scheduler(self.settings)
-        self.filter = FilterManager(self.settings)
-        self.task_manager = TaskManager(self.task_count)
-        self.middlewares = MiddlewareManager.create_instance(self.spider,self.settings)
-        self.pipelines = PipelineManager.create_instance(self.spider,self.settings)
+        self.scheduler = crawler.scheduler
+        self.filter = crawler.filter
+        self.task_manager = crawler.task_manager
+        self.download = crawler.download
+
+    async def __aenter__(self):
+        self.connection, self.channel = await self.scheduler.connect()
+        await self.scheduler.create_queue(self.channel, self.spider.name)
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        await self.channel.close()
+        await self.connection.close()
 
     async def routing(self, result):
         async def rule(res):
@@ -35,7 +39,7 @@ class Engine(object):
                     self.spider.logger.info(f'生产数据：{res.to_dict()}')
                     await self.scheduler.producer(self.channel, queue=self.spider.name, body=res.to_dict())
             elif isinstance(res, BaseItem):
-                await self.pipelines.process_item(res)
+                self.subscriber.notify(event.spider_item, res, self.spider)
 
         if isinstance(result, AsyncGenerator):
             async for r in result:
@@ -97,11 +101,11 @@ class Engine(object):
     async def deal_resp(self, incoming_message: IncomingMessage):
         ret = pickle.loads(incoming_message.body)
         self.spider.logger.info(f'消费数据：{ret}')
-        request, response = await self.middlewares.downloader(Request(**ret))
+        request, response = await self.download.send(Request(**ret))
         if response:
             try:
                 callback = getattr(self.spider, ret['callback'])
-                result = callback(request, response)
+                result = await callback(request, response)
                 if result:
                     await self.routing(result)
             except Exception as e:
@@ -110,19 +114,10 @@ class Engine(object):
                     task.cancel()
             else:
                 await incoming_message.ack()
-
-    async def open(self):
-        self.connection, self.channel = await self.scheduler.connect()
-        await self.scheduler.create_queue(self.channel, self.spider.name)
-        await self.pipelines.open_spider()
-
-    async def close(self):
-        await self.pipelines.close_spider()
-        await self.channel.close()
-        await self.connection.close()
+        elif request:
+            await self.routing(request)
 
     async def start(self):
-        await self.open()
         if self.mode == 'auto':
             await self.produce()
             await self.crawl()
@@ -132,4 +127,3 @@ class Engine(object):
             await self.consume()
         else:
             raise RabbitExpect('执行模式错误！')
-        await self.close()

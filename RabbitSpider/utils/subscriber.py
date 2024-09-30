@@ -1,3 +1,4 @@
+import asyncio
 from collections import defaultdict
 from typing import Dict, Set, Callable
 
@@ -14,7 +15,7 @@ class Subscriber(object):
 
     def notify(self, event: str, *args, **kwargs):
         for receiver in self._subscriber[event]:
-            receiver(*args, **kwargs)
+            asyncio.create_task(receiver(*args, **kwargs))
 
     @classmethod
     def create_instance(cls):

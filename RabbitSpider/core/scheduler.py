@@ -32,9 +32,9 @@ class Scheduler(object):
         queue = await channel.declare_queue(name=queue, durable=True, passive=True, arguments={"x-max-priority": 10})
         if callback:
             await channel.set_qos(prefetch_count=prefetch)
-            await queue.consume(callback=callback)
+            await queue.consume(callback=callback, timeout=3)
         else:
-            return await queue.get()
+            return await queue.get(timeout=3)
 
     @staticmethod
     async def queue_purge(channel, queue: str):

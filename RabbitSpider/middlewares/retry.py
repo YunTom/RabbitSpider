@@ -2,11 +2,11 @@ from RabbitSpider.middlewares import BaseMiddleware
 
 
 class RetryMiddleware(BaseMiddleware):
-    def __init__(self, spider, settings):
-        super().__init__(spider, settings)
-        self.retry_http_code = settings.getlist('RETRY_HTTP_CODES')
-        self.retry_exceptions = settings.getlist('RETRY_EXCEPTIONS')
-        self.max_retry = settings.get('MAX_RETRY')
+    def __init__(self, crawler):
+        super().__init__(crawler)
+        self.retry_http_code = crawler.settings.getlist('RETRY_HTTP_CODES')
+        self.retry_exceptions = crawler.settings.getlist('RETRY_EXCEPTIONS')
+        self.max_retry = crawler.settings.get('MAX_RETRY')
 
     async def process_response(self, request, response, spider):
         if response.status in self.retry_http_code:
