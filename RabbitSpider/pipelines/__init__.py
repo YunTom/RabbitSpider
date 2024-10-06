@@ -1,11 +1,6 @@
-from RabbitSpider.utils import event
-
-
 class BasePipeline(object):
     def __init__(self, crawler):
-        crawler.subscriber.subscribe(self.open_spider, event.spider_opened)
-        crawler.subscriber.subscribe(self.process_item, event.spider_item)
-        crawler.subscriber.subscribe(self.close_spider, event.spider_closed)
+        pass
 
     async def open_spider(self, spider):
         """初始化数据库"""

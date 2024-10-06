@@ -22,15 +22,18 @@ class Engine(object):
         self.filter = crawler.filter
         self.task_manager = crawler.task_manager
         self.download = crawler.download
+        self.pipeline = crawler.pipeline
 
     async def __aenter__(self):
         self.connection, self.channel = await self.scheduler.connect()
         await self.scheduler.create_queue(self.channel, self.spider.name)
+        await self.pipeline.open_spider()
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         await self.channel.close()
         await self.connection.close()
+        await self.pipeline.close_spider()
 
     async def routing(self, result):
         async def rule(res):
@@ -39,6 +42,7 @@ class Engine(object):
                     self.spider.logger.info(f'生产数据：{res.to_dict()}')
                     await self.scheduler.producer(self.channel, queue=self.spider.name, body=res.to_dict())
             elif isinstance(res, BaseItem):
+                await self.pipeline.process_item(res)
                 self.subscriber.notify(event.spider_item, res, self.spider)
 
         if isinstance(result, AsyncGenerator):

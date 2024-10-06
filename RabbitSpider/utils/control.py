@@ -86,7 +86,25 @@ class PipelineManager(object):
 
     def _add_pipe(self, pipelines):
         for pipeline in pipelines:
-            load_class(pipeline).create_instance(self.crawler)
+            pipeline_obj = load_class(pipeline).create_instance(self.crawler)
+            if hasattr(pipeline_obj, 'open_spider'):
+                self.methods['open_spider'].append(getattr(pipeline_obj, 'open_spider'))
+            if hasattr(pipeline_obj, 'process_item'):
+                self.methods['process_item'].append(getattr(pipeline_obj, 'process_item'))
+            if hasattr(pipeline_obj, 'close_spider'):
+                self.methods['close_spider'].append(getattr(pipeline_obj, 'close_spider'))
+
+    async def open_spider(self):
+        for method in self.methods['open_spider']:
+            await method(self.spider)
+
+    async def process_item(self, req):
+        for method in self.methods['process_item']:
+            await method(req, self.spider)
+
+    async def close_spider(self):
+        for method in self.methods['close_spider']:
+            await method(self.spider)
 
     @classmethod
     def create_instance(cls, crawler):
