@@ -145,10 +145,10 @@ class MiddlewareManager(object):
 
 
 class FilterManager(object):
-    def __init__(self, settings):
-        filter_cls = settings.get('DUPEFILTER_CLASS')
+    def __init__(self, crawler):
+        filter_cls = crawler.settings.get('DUPEFILTER_CLASS')
         if filter_cls:
-            self.filter_obj = load_class(filter_cls)(settings)
+            self.filter_obj = load_class(filter_cls)(crawler.spider.name)
         else:
             self.filter_obj = None
 

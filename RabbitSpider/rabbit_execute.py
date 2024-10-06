@@ -21,7 +21,7 @@ class Crawler(object):
         self.subscriber = Subscriber.create_instance()
         self.spider = spider(self)
         self.scheduler = Scheduler(self.settings)
-        self.filter = FilterManager(self.settings)
+        self.filter = FilterManager(self)
         self.pipelines = PipelineManager.create_instance(self)
         self.task_manager = TaskManager(self.task_count)
         self.download = CurlDownload.create_instance(self)
