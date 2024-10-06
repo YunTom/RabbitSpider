@@ -6,7 +6,7 @@ from urllib.parse import urlencode
 
 
 class DupeFilter(object):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, crawler):
         pass
 
     def request_fingerprint(self, request: Request):
