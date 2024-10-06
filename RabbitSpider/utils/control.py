@@ -148,7 +148,7 @@ class FilterManager(object):
     def __init__(self, crawler):
         filter_cls = crawler.settings.get('DUPEFILTER_CLASS')
         if filter_cls:
-            self.filter_obj = load_class(filter_cls)(crawler.spider.name)
+            self.filter_obj = load_class(filter_cls)(crawler)
         else:
             self.filter_obj = None
 
