@@ -1,5 +1,3 @@
-import os
-import sys
 import redis
 from RabbitSpider.dupefilters import DupeFilter
 
