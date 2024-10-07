@@ -86,7 +86,7 @@ class PipelineManager(object):
 
     def _add_pipe(self, pipelines):
         for pipeline in pipelines:
-            pipeline_obj = load_class(pipeline).create_instance(self.crawler)
+            pipeline_obj = load_class(pipeline)(self.crawler)
             if hasattr(pipeline_obj, 'open_spider'):
                 self.methods['open_spider'].append(getattr(pipeline_obj, 'open_spider'))
             if hasattr(pipeline_obj, 'process_item'):
@@ -115,7 +115,7 @@ class MiddlewareManager(object):
 
     def _add_middleware(self, middlewares):
         for middleware in middlewares:
-            middleware_obj = load_class(middleware).create_instance(self.crawler)
+            middleware_obj = load_class(middleware)(self.crawler)
             if hasattr(middleware_obj, 'process_request'):
                 self.methods['process_request'].append(getattr(middleware_obj, 'process_request'))
             if hasattr(middleware_obj, 'process_response'):
