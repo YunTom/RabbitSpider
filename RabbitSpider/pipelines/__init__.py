@@ -13,7 +13,3 @@ class BasePipeline(object):
     async def close_spider(self, spider):
         """关闭连接"""
         pass
-
-    @classmethod
-    def create_instance(cls, crawler):
-        return cls(crawler)

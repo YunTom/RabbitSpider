@@ -17,7 +17,3 @@ class BaseMiddleware:
     async def process_exception(self, request, exc, spider) -> None | Request | Response:
         """异常预处理"""
         pass
-
-    @classmethod
-    def create_instance(cls, crawler):
-        return cls(crawler)
