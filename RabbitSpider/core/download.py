@@ -9,7 +9,7 @@ class CurlDownload(object):
         self.crawler = crawler
         self.impersonate = crawler.settings.get('IMPERSONATE')
         self.http_version = crawler.settings.get('HTTP_VERSION')
-        self.middlewares = MiddlewareManager.create_instance(crawler)
+        self.middlewares = MiddlewareManager(crawler)
         self.session = AsyncSession(verify=False)
 
     async def fetch(self, request):
