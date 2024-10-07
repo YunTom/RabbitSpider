@@ -106,10 +106,6 @@ class PipelineManager(object):
         for method in self.methods['close_spider']:
             await method(self.spider)
 
-    @classmethod
-    def create_instance(cls, crawler):
-        return cls(crawler)
-
 
 class MiddlewareManager(object):
     def __init__(self, crawler):
@@ -156,10 +152,6 @@ class MiddlewareManager(object):
                 break
         else:
             raise exc
-
-    @classmethod
-    def create_instance(cls, crawler):
-        return cls(crawler)
 
 
 class FilterManager(object):

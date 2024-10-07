@@ -16,7 +16,3 @@ class Subscriber(object):
     def notify(self, event: str, *args, **kwargs):
         for receiver in self._subscriber[event]:
             asyncio.create_task(receiver(*args, **kwargs))
-
-    @classmethod
-    def create_instance(cls):
-        return cls()

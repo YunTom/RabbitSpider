@@ -18,13 +18,13 @@ class Crawler(object):
         self.mode = mode
         self.task_count = task_count
         self.settings = SettingManager()
-        self.subscriber = Subscriber.create_instance()
+        self.subscriber = Subscriber()
         self.spider = spider(self)
         self.scheduler = Scheduler(self.settings)
         self.filter = FilterManager(self)
-        self.pipeline = PipelineManager.create_instance(self)
+        self.pipeline = PipelineManager(self)
         self.task_manager = TaskManager(self.task_count)
-        self.download = CurlDownload.create_instance(self)
+        self.download = CurlDownload(self)
 
     async def process(self):
         self.spider.logger.info(f'任务{self.spider.name}启动')

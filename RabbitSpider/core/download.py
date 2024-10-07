@@ -52,7 +52,3 @@ class CurlDownload(object):
         if not resp:
             return None, None
         return request, resp
-
-    @classmethod
-    def create_instance(cls, crawler):
-        return cls(crawler)
