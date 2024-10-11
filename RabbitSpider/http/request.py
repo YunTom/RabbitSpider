@@ -16,7 +16,7 @@ class Request(object):
                  timeout: int | None = None,
                  allow_redirects: bool = True,
                  callback: str | Callable = 'parse',
-                 retry: int = 0,
+                 retry_times: int = 1,
                  meta: dict | None = None
                  ):
         self.url = url
@@ -30,7 +30,7 @@ class Request(object):
         self.timeout = timeout
         self.allow_redirects = allow_redirects
         self._callback = callback
-        self.retry = retry
+        self.retry_times = retry_times
         self._meta = meta
         self.__argsValidators__({k: v for k, v in locals().items() if k not in ['self']})
 
@@ -69,5 +69,5 @@ class Request(object):
             'allow_redirects': self.allow_redirects,
             'callback': self.callback,
             'meta': self.meta,
-            'retry': self.retry
+            'retry_times': self.retry_times
         }

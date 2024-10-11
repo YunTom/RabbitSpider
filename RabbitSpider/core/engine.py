@@ -3,7 +3,6 @@ import asyncio
 from aio_pika import IncomingMessage
 from RabbitSpider import Request
 from RabbitSpider.items.item import BaseItem
-from RabbitSpider.utils import event
 from RabbitSpider.utils.exceptions import RabbitExpect
 from collections.abc import AsyncGenerator, Coroutine, Generator
 from aio_pika.exceptions import QueueEmpty, ChannelClosed, ChannelNotFoundEntity

@@ -25,7 +25,7 @@ class Scheduler(object):
     async def producer(channel, queue: str, body: dict):
         ret = pickle.dumps(body)
         await channel.default_exchange.publish(
-            Message(body=ret, delivery_mode=2, priority=body['retry']), routing_key=queue)
+            Message(body=ret, delivery_mode=2, priority=body['retry_times']), routing_key=queue)
 
     @staticmethod
     async def consumer(channel, queue: str, callback: Optional[Callable] = None, prefetch: int = 1):
