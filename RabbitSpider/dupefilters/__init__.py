@@ -34,5 +34,5 @@ class DupeFilter(object):
         sha1.update(str(request.retry).encode('utf-8'))
         return sha1.hexdigest()
 
-    def request_seen(self, request: Request):
+    def request_seen(self, request: Request) -> bool:
         pass
