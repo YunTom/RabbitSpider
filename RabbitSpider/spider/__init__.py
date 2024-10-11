@@ -12,7 +12,6 @@ class Spider(object):
         crawler.subscriber.subscribe(self.spider_opened, event.spider_opened)
         crawler.subscriber.subscribe(self.spider_closed, event.spider_closed)
         crawler.subscriber.subscribe(self.spider_error, event.spider_error)
-        crawler.subscriber.subscribe(self.spider_item, event.spider_item)
         self.logger = Logger(crawler.settings, self.name)
 
     async def start_requests(self):
@@ -30,7 +29,4 @@ class Spider(object):
         pass
 
     async def spider_error(self, *args, **kwargs):
-        pass
-
-    async def spider_item(self, *args, **kwargs):
         pass

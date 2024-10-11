@@ -43,7 +43,6 @@ class Engine(object):
                     await self.scheduler.producer(self.channel, queue=self.spider.name, body=res.to_dict())
             elif isinstance(res, BaseItem):
                 await self.pipeline.process_item(res)
-                self.subscriber.notify(event.spider_item, res, self.spider)
 
         if isinstance(result, AsyncGenerator):
             async for r in result:
