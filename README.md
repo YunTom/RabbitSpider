@@ -10,7 +10,7 @@ pip install RabbitSpider==2.7.0
     rabbit create [项目名称] [目录名称] [爬虫文件名称]
 
 自动创建爬虫项目模板
-如：rabbit create shop xxx momo
+如：rabbit create shop xxx mama
 
     import asyncio
     from RabbitSpider import go
