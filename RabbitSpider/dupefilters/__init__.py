@@ -31,7 +31,7 @@ class DupeFilter(object):
             sha1.update(request.url.encode('utf-8'))
         sha1.update(request.method.encode('utf-8'))
         sha1.update(body)
-        sha1.update(str(request.retry).encode('utf-8'))
+        sha1.update(str(request.retry_times).encode('utf-8'))
         return sha1.hexdigest()
 
     def request_seen(self, request: Request) -> bool:

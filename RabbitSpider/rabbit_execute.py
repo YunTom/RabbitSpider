@@ -35,9 +35,11 @@ class Crawler(object):
         except CancelledError as exc:
             self.spider.logger.error(f'任务{self.spider.name}中止')
             self.subscriber.notify(event.spider_error, self.spider, exc)
+            print_exc()
         except Exception as exc:
             self.spider.logger.error(f'任务{self.spider.name}中止')
             self.subscriber.notify(event.spider_error, self.spider, exc)
+            print_exc()
         else:
             self.subscriber.notify(event.spider_closed, self.spider)
             self.spider.logger.info(f'任务{self.spider.name}结束')
