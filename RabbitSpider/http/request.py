@@ -16,7 +16,7 @@ class Request(object):
                  timeout: int | None = None,
                  allow_redirects: bool = True,
                  callback: str | Callable = 'parse',
-                 retry_times: int = 1,
+                 retry_times: int = 0,
                  meta: dict | None = None
                  ):
         self.url = url
