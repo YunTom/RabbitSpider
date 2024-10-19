@@ -13,6 +13,5 @@ class Subscriber(object):
     def unsubscribe(self, receiver: Callable, event: str):
         self._subscriber[event].discard(receiver)
 
-    def notify(self, event: str, *args, **kwargs):
-        for receiver in self._subscriber[event]:
-            asyncio.create_task(receiver(*args, **kwargs))
+    async def notify(self, event: str, *args, **kwargs):
+        await asyncio.gather(*[receiver(*args, **kwargs) for receiver in self._subscriber[event]])
