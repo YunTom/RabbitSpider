@@ -5,19 +5,20 @@ from loguru import logger
 
 class Logger(object):
     def __init__(self, settings, name):
-        log_path = settings.get('LOG_FILE')
+        logger.remove()
+        log_path = os.path.join(settings.get('BOT_DIR'), settings.get('LOG_FILE')) if settings.get(
+            'LOG_FILE') and settings.get('LOG_FILE').startswith('.') else settings.get('LOG_FILE')
         if log_path:
-            if log_path.startswith('.'):
-                log_path = os.path.join(settings.get('BOT_DIR'), log_path)
             logger.add("%s/rabbit_{time:YYYY-MM-DD}.log" % log_path,
                        level=settings.get('LOG_LEVEL', 'ERROR'),
                        rotation="1 day",
                        retention="1 week",
-                       format="{time:YYYY-MM-DD HH:mm:ss} | {level} | {extra[scope]} | {message}")
-        else:
-            logger.add(sink=sys.stderr,
-                       level=settings.get('LOG_LEVEL', 'ERROR'),
-                       format="{time:YYYY-MM-DD HH:mm:ss} | {level} | {extra[scope]} | {message}")
+                       format="<green>{time:YYYY-MM-DD HH:mm:ss}</green> | <level>{level}</level> | <cyan>{extra[scope]}</cyan> | <level>{message}</level>")
+
+        logger.add(sink=sys.stdout,
+                   colorize=True,
+                   level=settings.get('LOG_LEVEL', 'INFO'),
+                   format="<green>{time:YYYY-MM-DD HH:mm:ss}</green> | <level>{level}</level> | <cyan>{extra[scope]}</cyan> | <level>{message}</level>")
         self._logger = logger.bind(scope=name)
 
     def info(self, msg):

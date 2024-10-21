@@ -53,7 +53,7 @@ class SettingManager(object):
     def set(self, key, value):
         self[key] = value
 
-    def set_dict(self, custom_settings):
+    def update(self, custom_settings):
         self.attribute.update(custom_settings)
 
 

@@ -8,7 +8,7 @@ class Spider(object):
     custom_settings: dict = {}
 
     def __init__(self, crawler):
-        crawler.settings.set_dict(self.custom_settings)
+        crawler.settings.update(self.custom_settings)
         crawler.subscriber.subscribe(self.spider_opened, event.spider_opened)
         crawler.subscriber.subscribe(self.spider_closed, event.spider_closed)
         crawler.subscriber.subscribe(self.spider_error, event.spider_error)
