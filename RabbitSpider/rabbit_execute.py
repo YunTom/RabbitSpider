@@ -27,22 +27,22 @@ class Crawler(object):
         self.download = CurlDownload(self)
 
     async def process(self):
-        self.spider.logger.info(f'任务{self.spider.name}启动')
-        await self.subscriber.notify(event.spider_opened, self.spider)
-        try:
-            async with Engine(self) as engine:
+        async with Engine(self) as engine:
+            self.spider.logger.info(f'任务{self.spider.name}启动')
+            await self.subscriber.notify(event.spider_opened, self.spider)
+            try:
                 await engine.start()
-        except CancelledError as exc:
-            self.spider.logger.error(f'任务{self.spider.name}中止')
-            await self.subscriber.notify(event.spider_error, self.spider, exc)
-            print_exc()
-        except Exception as exc:
-            self.spider.logger.error(f'任务{self.spider.name}中止')
-            await self.subscriber.notify(event.spider_error, self.spider, exc)
-            print_exc()
-        else:
-            await self.subscriber.notify(event.spider_closed, self.spider)
-            self.spider.logger.info(f'任务{self.spider.name}结束')
+            except CancelledError as exc:
+                self.spider.logger.error(f'任务{self.spider.name}中止')
+                await self.subscriber.notify(event.spider_error, self.spider, exc)
+                print_exc()
+            except Exception as exc:
+                self.spider.logger.error(f'任务{self.spider.name}中止')
+                await self.subscriber.notify(event.spider_error, self.spider, exc)
+                print_exc()
+            else:
+                await self.subscriber.notify(event.spider_closed, self.spider)
+                self.spider.logger.info(f'任务{self.spider.name}结束')
 
 
 async def main(spider, mode, task_count):
