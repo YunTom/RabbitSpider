@@ -1,8 +1,9 @@
+from abc import ABC, abstractmethod
 from RabbitSpider import Request, Response
 from RabbitSpider.utils import event
 
 
-class Spider(object):
+class Spider(ABC):
     name: str
     custom_settings: dict = {}
 
@@ -12,9 +13,10 @@ class Spider(object):
         crawler.subscriber.subscribe(self.spider_error, event.spider_error)
         self.logger = crawler.logger
 
+    @abstractmethod
     async def start_requests(self):
         """初始请求"""
-        raise NotImplementedError
+        pass
 
     async def parse(self, request: Request, response: Response):
         """默认回调"""
