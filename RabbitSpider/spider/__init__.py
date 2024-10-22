@@ -1,5 +1,4 @@
 from RabbitSpider import Request, Response
-from RabbitSpider.utils.log import Logger
 from RabbitSpider.utils import event
 
 
@@ -8,11 +7,10 @@ class Spider(object):
     custom_settings: dict = {}
 
     def __init__(self, crawler):
-        crawler.settings.update(self.custom_settings)
         crawler.subscriber.subscribe(self.spider_opened, event.spider_opened)
         crawler.subscriber.subscribe(self.spider_closed, event.spider_closed)
         crawler.subscriber.subscribe(self.spider_error, event.spider_error)
-        self.logger = Logger(crawler.settings, self.name)
+        self.logger = crawler.logger
 
     async def start_requests(self):
         """初始请求"""

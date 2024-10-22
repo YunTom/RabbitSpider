@@ -7,6 +7,7 @@ from RabbitSpider.core.scheduler import Scheduler
 from RabbitSpider.core.engine import Engine
 from RabbitSpider.spider import Spider
 from RabbitSpider.utils import event
+from RabbitSpider.utils.log import Logger
 from RabbitSpider.utils.subscriber import Subscriber
 from RabbitSpider.utils.control import SettingManager
 from asyncio.exceptions import CancelledError
@@ -19,6 +20,8 @@ class Crawler(object):
         self.task_count = task_count
         self.settings = SettingManager()
         self.subscriber = Subscriber()
+        self.settings.update(spider.custom_settings)
+        self.logger = Logger(self.settings, spider.name)
         self.spider = spider(self)
         self.scheduler = Scheduler(self.settings)
         self.filter = FilterManager(self)
@@ -28,21 +31,21 @@ class Crawler(object):
 
     async def process(self):
         async with Engine(self) as engine:
-            self.spider.logger.info(f'任务{self.spider.name}启动')
+            self.logger.info(f'任务{self.spider.name}启动')
             await self.subscriber.notify(event.spider_opened, self.spider)
             try:
                 await engine.start()
             except CancelledError as exc:
-                self.spider.logger.error(f'任务{self.spider.name}异常')
+                self.logger.error(f'任务{self.spider.name}异常')
                 await self.subscriber.notify(event.spider_error, self.spider, exc)
                 print_exc()
             except Exception as exc:
-                self.spider.logger.error(f'任务{self.spider.name}异常')
+                self.logger.error(f'任务{self.spider.name}异常')
                 await self.subscriber.notify(event.spider_error, self.spider, exc)
                 print_exc()
             else:
                 await self.subscriber.notify(event.spider_closed, self.spider)
-                self.spider.logger.info(f'任务{self.spider.name}结束')
+                self.logger.info(f'任务{self.spider.name}结束')
 
 
 async def main(spider, mode, task_count):

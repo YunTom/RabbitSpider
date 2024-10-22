@@ -14,7 +14,7 @@ class RetryMiddleware(BaseMiddleware):
                 request.retry_times += 1
                 return request
             else:
-                spider.logger.warning(f'丢弃{request.to_dict()}，状态码：{response.status}')
+                self.logger.warning(f'丢弃{request.to_dict()}，状态码：{response.status}')
                 return True
 
     async def process_exception(self, request, exc, spider):
@@ -23,5 +23,5 @@ class RetryMiddleware(BaseMiddleware):
                 request.retry_times += 1
                 return request
             else:
-                spider.logger.warning(f'丢弃{request.to_dict()}，异常：{repr(exc)}')
+                self.logger.warning(f'丢弃{request.to_dict()}，异常：{repr(exc)}')
                 return True

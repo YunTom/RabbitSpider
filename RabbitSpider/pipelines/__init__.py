@@ -1,6 +1,6 @@
 class BasePipeline(object):
     def __init__(self, crawler):
-        pass
+        self.logger = crawler.logger
 
     async def open_spider(self, spider):
         """初始化数据库"""

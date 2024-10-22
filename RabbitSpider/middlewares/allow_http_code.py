@@ -8,5 +8,5 @@ class AllowHttpCodeMiddleware(BaseMiddleware):
 
     async def process_response(self, request, response, spider):
         if response.status not in self.allow_http_code:
-            spider.logger.error(f'{request.to_dict()}，不允许的状态码：{response.status}')
+            self.logger.error(f'{request.to_dict()}，不允许的状态码：{response.status}')
             return True

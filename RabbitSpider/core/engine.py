@@ -22,6 +22,7 @@ class Engine(object):
         self.task_manager = crawler.task_manager
         self.download = crawler.download
         self.pipeline = crawler.pipeline
+        self.logger = crawler.logger
 
     async def __aenter__(self):
         self.connection, self.channel = await self.scheduler.connect()
@@ -38,7 +39,7 @@ class Engine(object):
         async def rule(res):
             if isinstance(res, Request):
                 if self.filter.request_seen(res):
-                    self.spider.logger.info(f'生产数据：{res.to_dict()}')
+                    self.logger.info(f'生产数据：{res.to_dict()}')
                     await self.scheduler.producer(self.channel, queue=self.spider.name, body=res.to_dict())
             elif isinstance(res, BaseItem):
                 await self.pipeline.process_item(res)
@@ -64,7 +65,7 @@ class Engine(object):
             await self.scheduler.queue_purge(self.channel, self.spider.name)
             await self.routing(self.spider.start_requests())
         except Exception as e:
-            self.spider.logger.error(f'{e}')
+            self.logger.error(f'{e}')
             for task in asyncio.all_tasks():
                 task.cancel()
 
@@ -82,7 +83,7 @@ class Engine(object):
                 break
             except ChannelClosed:
                 await asyncio.sleep(1)
-                self.spider.logger.warning('rabbitmq重新连接')
+                self.logger.warning('rabbitmq重新连接')
                 self.connection, self.channel = await self.scheduler.connect()
                 continue
             await self.task_manager.semaphore.acquire()
@@ -95,14 +96,14 @@ class Engine(object):
                                               prefetch=self.task_count)
             except ChannelClosed:
                 await asyncio.sleep(1)
-                self.spider.logger.warning('rabbitmq重新连接')
+                self.logger.warning('rabbitmq重新连接')
                 self.connection, self.channel = await self.scheduler.connect()
                 continue
             await asyncio.Future()
 
     async def deal_resp(self, incoming_message: IncomingMessage):
         ret = pickle.loads(incoming_message.body)
-        self.spider.logger.info(f'消费数据：{ret}')
+        self.logger.info(f'消费数据：{ret}')
         request, response = await self.download.send(Request(**ret))
         if response:
             try:
@@ -111,7 +112,7 @@ class Engine(object):
                 if result:
                     await self.routing(result)
             except Exception as e:
-                self.spider.logger.error(f'解析失败：{e}')
+                self.logger.error(f'解析失败：{e}')
                 for task in asyncio.all_tasks():
                     task.cancel()
             else:

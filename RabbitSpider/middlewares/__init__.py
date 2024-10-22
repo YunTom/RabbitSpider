@@ -4,7 +4,7 @@ from RabbitSpider import Response
 
 class BaseMiddleware:
     def __init__(self, crawler):
-        pass
+        self.logger = crawler.logger
 
     async def process_request(self, request, spider) -> None | Request | Response:
         """请求预处理"""
