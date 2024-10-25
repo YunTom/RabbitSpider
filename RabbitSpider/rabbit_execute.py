@@ -71,7 +71,7 @@ async def batch_go(spiders: List[Type[Spider]], task_pool: int = 10):
     task_manager = TaskManager(task_pool)
     for spider in spiders:
         await task_manager.semaphore.acquire()
-        task_manager.create_task(go(spider, mode='auto', task_count=1))
+        task_manager.create_task(main(spider, mode='auto', task_count=1))
     while True:
         if task_manager.all_done():
             break
