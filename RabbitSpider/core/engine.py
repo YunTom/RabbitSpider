@@ -64,10 +64,8 @@ class Engine(object):
         try:
             await self.scheduler.queue_purge(self.channel, self.spider.name)
             await self.routing(self.spider.start_requests())
-        except Exception as e:
-            self.logger.error(f'{e}')
-            for task in asyncio.all_tasks():
-                task.cancel()
+        except Exception as exc:
+            raise RabbitExpect(exc)
 
     async def crawl(self):
         while True:
@@ -109,10 +107,8 @@ class Engine(object):
             try:
                 callback = getattr(self.spider, ret['callback'])
                 result = callback(request, response)
-            except Exception as e:
-                self.logger.error(f'解析失败：{e}')
-                for task in asyncio.all_tasks():
-                    task.cancel()
+            except Exception as exc:
+                raise RabbitExpect(exc)
             else:
                 result and await self.routing(result)
                 await incoming_message.ack()
