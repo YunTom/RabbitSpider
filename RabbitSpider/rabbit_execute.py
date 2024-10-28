@@ -28,6 +28,13 @@ class Crawler(object):
         self.pipeline = PipelineManager(self)
         self.task_manager = TaskManager(self.task_count)
         self.download = CurlDownload(self)
+        loop = asyncio.get_running_loop()
+        loop.set_exception_handler(self.custom_exception_handler)
+
+    def custom_exception_handler(self, loop, context):
+        self.logger.error(f"Exception in loop {loop} : {context['exception'].args}")
+        for task in asyncio.all_tasks():
+            task.cancel()
 
     async def process(self):
         async with Engine(self) as engine:
