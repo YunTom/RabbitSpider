@@ -61,12 +61,9 @@ class Engine(object):
             raise RabbitExpect('回调函数返回类型错误！')
 
     async def produce(self):
-        try:
-            await self.scheduler.queue_purge(self.channel, self.spider.name)
-            await self.routing(self.spider.start_requests())
-        except Exception as exc:
-            raise RabbitExpect(exc)
-
+        await self.scheduler.queue_purge(self.channel, self.spider.name)
+        await self.routing(self.spider.start_requests())
+       
     async def crawl(self):
         while True:
             try:
@@ -104,16 +101,12 @@ class Engine(object):
         self.logger.info(f'消费数据：{ret}')
         request, response = await self.download.send(Request(**ret))
         if response:
-            try:
-                callback = getattr(self.spider, ret['callback'])
-                result = callback(request, response)
-            except Exception as exc:
-                raise RabbitExpect(exc)
-            else:
-                result and await self.routing(result)
-                await incoming_message.ack()
+            callback = getattr(self.spider, ret['callback'])
+            result = callback(request, response)
+            result and await self.routing(result)
         elif request:
             await self.routing(request)
+        await incoming_message.ack()
 
     async def start(self):
         if self.mode == 'auto':
