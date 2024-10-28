@@ -109,13 +109,12 @@ class Engine(object):
             try:
                 callback = getattr(self.spider, ret['callback'])
                 result = callback(request, response)
-                if result:
-                    await self.routing(result)
             except Exception as e:
                 self.logger.error(f'解析失败：{e}')
                 for task in asyncio.all_tasks():
                     task.cancel()
             else:
+                result and await self.routing(result)
                 await incoming_message.ack()
         elif request:
             await self.routing(request)
