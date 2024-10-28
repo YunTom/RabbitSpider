@@ -2,6 +2,7 @@ import asyncio
 import sys
 from typing import Type, List
 from traceback import print_exc
+from asyncio.exceptions import CancelledError
 from RabbitSpider.core.download import CurlDownload
 from RabbitSpider.core.scheduler import Scheduler
 from RabbitSpider.core.engine import Engine
@@ -10,7 +11,6 @@ from RabbitSpider.utils import event
 from RabbitSpider.utils.log import Logger
 from RabbitSpider.utils.subscriber import Subscriber
 from RabbitSpider.utils.control import SettingManager
-from asyncio.exceptions import CancelledError
 from RabbitSpider.utils.control import TaskManager, PipelineManager, FilterManager
 
 
