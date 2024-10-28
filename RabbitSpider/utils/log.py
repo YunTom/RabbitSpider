@@ -17,7 +17,7 @@ class Logger(object):
 
         logger.add(sink=sys.stdout,
                    colorize=True,
-                   level='INFO',
+                   level=settings.get('LOG_LEVEL', 'INFO'),
                    format="<green>{time:YYYY-MM-DD HH:mm:ss}</green> | <level>{level}</level> | <cyan>{extra[scope]}</cyan> | <level>{message}</level>")
         self._logger = logger.bind(scope=name)
 
