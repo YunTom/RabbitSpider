@@ -32,7 +32,7 @@ class Crawler(object):
         loop.set_exception_handler(self.custom_exception_handler)
 
     def custom_exception_handler(self, loop, context):
-        self.logger.error(f"Exception in loop {loop} : {context['exception'].args}")
+        self.logger.error(f"Exception in loop {loop} : {context['future'].exception()}")
         try:
             for task in asyncio.all_tasks():
                 task.cancel()
