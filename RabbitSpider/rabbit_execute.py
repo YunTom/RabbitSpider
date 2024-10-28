@@ -33,8 +33,11 @@ class Crawler(object):
 
     def custom_exception_handler(self, loop, context):
         self.logger.error(f"Exception in loop {loop} : {context['exception'].args}")
-        for task in asyncio.all_tasks():
-            task.cancel()
+        try:
+            for task in asyncio.all_tasks():
+                task.cancel()
+        except RuntimeError:
+            pass
 
     async def process(self):
         async with Engine(self) as engine:
