@@ -45,7 +45,6 @@ class Crawler(object):
             except CancelledError as exc:
                 self.logger.error(f'任务{self.spider.name}异常')
                 await self.subscriber.notify(event.spider_error, self.spider, exc)
-                print_exc()
             except Exception as exc:
                 self.logger.error(f'任务{self.spider.name}异常')
                 await self.subscriber.notify(event.spider_error, self.spider, exc)
