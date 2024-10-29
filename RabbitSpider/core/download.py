@@ -1,7 +1,7 @@
 from curl_cffi.requests import AsyncSession
 from RabbitSpider import Response, Request
 from RabbitSpider.utils.control import MiddlewareManager
-from RabbitSpider.utils.exceptions import RabbitExpect
+from RabbitSpider.exceptions import RabbitExpect
 
 
 class CurlDownload(object):

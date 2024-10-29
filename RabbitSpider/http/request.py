@@ -1,6 +1,6 @@
 import re
 from typing import Callable, get_type_hints
-from RabbitSpider.utils.exceptions import RabbitExpect
+from RabbitSpider.exceptions import RabbitExpect
 
 
 class Request(object):
