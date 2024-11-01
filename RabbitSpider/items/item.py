@@ -4,10 +4,19 @@ from RabbitSpider.items import ItemMeta
 class BaseItem(metaclass=ItemMeta):
     def __init__(self):
         self._values = {}
+        for k, v in self.FIELDS.items():
+            if v['value']:
+                self._values[k] = v['value']
 
     def __setitem__(self, key, value):
         if key in self.FIELDS:
-            self._values[key] = value
+            if self.FIELDS[key]['annotation']:
+                if isinstance(value, self.FIELDS[key]['annotation']):
+                    self._values[key] = value
+                else:
+                    raise TypeError(f"{value} is not type {self.FIELDS[key]['annotation']}")
+            else:
+                self._values[key] = value
         else:
             raise KeyError(f'field {key} undefined')
 
@@ -38,4 +47,3 @@ class BaseItem(metaclass=ItemMeta):
 
     def to_dict(self):
         return self._values
-
