@@ -1,6 +1,5 @@
 import re
-from typing import Callable, get_type_hints
-from RabbitSpider.exceptions import RabbitExpect
+from typing import Callable
 
 
 class Request(object):
@@ -19,7 +18,7 @@ class Request(object):
                  retry_times: int = 0,
                  meta: dict | None = None
                  ):
-        self.url = url
+        self._url = url
         self.params = params
         self.data = data
         self.json = json
@@ -32,20 +31,13 @@ class Request(object):
         self._callback = callback
         self.retry_times = retry_times
         self._meta = meta
-        self.__argsValidators__({k: v for k, v in locals().items() if k not in ['self']})
 
-    def __argsValidators__(self, kwargs):
+    @property
+    def url(self):
         pattern = re.compile('http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+')
-        hints = get_type_hints(self.__init__)
-        for key, value in kwargs.items():
-            args_type = hints.get(key)
-            if args_type:
-                if not isinstance(value, args_type):
-                    raise RabbitExpect(f"Request参数类型错误{key}")
-            else:
-                raise RabbitExpect(f"Request异常参数{key}")
-        if not re.match(pattern, kwargs['url']):
-            raise RabbitExpect(f'请检查url是否正确{kwargs["url"]}')
+        if not re.match(pattern, self._url):
+            raise ValueError(f'请检查url是否正确{self._url}')
+        return self._url
 
     @property
     def meta(self):
