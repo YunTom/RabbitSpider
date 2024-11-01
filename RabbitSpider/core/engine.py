@@ -58,7 +58,7 @@ class Engine(object):
         elif result is None:
             pass
         else:
-            raise RabbitExpect('回调函数返回类型错误！')
+            raise TypeError('回调函数返回类型错误！')
 
     async def produce(self):
         await self.scheduler.queue_purge(self.channel, self.spider.name)
