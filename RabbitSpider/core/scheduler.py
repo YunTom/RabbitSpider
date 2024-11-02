@@ -29,16 +29,16 @@ class Scheduler(object):
 
     @staticmethod
     async def consumer(channel, queue: str, callback: Optional[Callable] = None, prefetch: int = 1):
-        queue = await channel.declare_queue(name=queue, durable=True, passive=True, arguments={"x-max-priority": 10})
+        queue = await channel.declare_queue(name=queue, durable=True, passive=True)
         if callback:
             await channel.set_qos(prefetch_count=prefetch)
             await queue.consume(callback=callback, timeout=3)
         else:
-            return await queue.get(timeout=3)
+            return await queue.get()
 
     @staticmethod
     async def queue_purge(channel, queue: str):
-        queue = await channel.declare_queue(name=queue, durable=True, passive=True, arguments={"x-max-priority": 10})
+        queue = await channel.declare_queue(name=queue, durable=True, passive=True)
         await queue.purge()
 
     @staticmethod
