@@ -5,7 +5,7 @@ class BaseItem(metaclass=ItemMeta):
     def __init__(self):
         self._values = {}
         for k, v in self.FIELDS.items():
-            if v['value']:
+            if v.get('value'):
                 self._values[k] = v['value']
 
     def __setitem__(self, key, value):
