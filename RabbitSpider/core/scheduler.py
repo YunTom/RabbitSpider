@@ -16,7 +16,7 @@ class Scheduler(object):
     async def connect(self):
         self.connection = await connect_robust(host=self.host, login=self.username, password=self.password,
                                                virtualhost=self.virtual_host)
-        self.channel_pool = pool.Pool(self.connection.channel, max_size=10)
+        self.channel_pool = pool.Pool(self.connection.channel, max_size=5)
 
     async def create_queue(self, queue: str):
         async with self.channel_pool.acquire() as channel:
