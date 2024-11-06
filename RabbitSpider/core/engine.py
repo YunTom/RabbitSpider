@@ -29,6 +29,7 @@ class Engine(object):
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
+        await self.scheduler.delete_queue(self.spider.name)
         await self.scheduler.close()
         await self.pipeline.close_spider()
 
@@ -67,7 +68,6 @@ class Engine(object):
                 incoming_message: IncomingMessage = await self.scheduler.consumer(self.spider.name)
             except QueueEmpty:
                 if self.task_manager.all_done():
-                    await self.scheduler.delete_queue(self.spider.name)
                     break
                 else:
                     continue
