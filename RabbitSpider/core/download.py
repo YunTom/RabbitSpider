@@ -20,7 +20,7 @@ class CurlDownload(object):
                                          allow_redirects=request.get('allow_redirects', True),
                                          http_version=self.http_version,
                                          impersonate=self.impersonate,
-                                         timeout=request.get('timeout', 60)
+                                         timeout=request.get('timeout', 30)
                                          )
 
         elif request['method'].upper() == 'POST':
@@ -31,7 +31,7 @@ class CurlDownload(object):
                                           http_version=self.http_version,
                                           impersonate=self.impersonate,
                                           allow_redirects=request.get('allow_redirects', True),
-                                          timeout=request.get('timeout', 180))
+                                          timeout=request.get('timeout', 60))
 
         else:
             raise RabbitExpect(f"{request['method']}请求方式未定义，请自定义添加！")
