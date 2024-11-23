@@ -7,6 +7,7 @@ class Scheduler(object):
     def __init__(self, settings):
         self.connection = None
         self.channel_pool = None
+        self.channel_size = settings.get('CHANNEL_SIZE')
         self.username = settings.get('RABBIT_USERNAME')
         self.password = settings.get('RABBIT_PASSWORD')
         self.host = settings.get('RABBIT_HOST')
@@ -16,7 +17,7 @@ class Scheduler(object):
     async def connect(self):
         self.connection = await connect_robust(host=self.host, login=self.username, password=self.password,
                                                virtualhost=self.virtual_host)
-        self.channel_pool = pool.Pool(self.connection.channel, max_size=5)
+        self.channel_pool = pool.Pool(self.connection.channel, max_size=self.channel_size)
 
     async def create_queue(self, queue: str):
         async with self.channel_pool.acquire() as channel:
