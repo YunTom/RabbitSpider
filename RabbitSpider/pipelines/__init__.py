@@ -1,6 +1,9 @@
+from RabbitSpider.utils.log import Logger
+
+
 class BasePipeline(object):
     def __init__(self, crawler):
-        self.logger = crawler.logger
+        self.logger: Logger = crawler.logger
 
     async def open_spider(self, spider):
         """初始化数据库"""
