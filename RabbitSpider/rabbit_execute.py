@@ -10,7 +10,7 @@ from RabbitSpider.spider import Spider
 from RabbitSpider.utils import event
 from RabbitSpider.utils.log import Logger
 from RabbitSpider.utils.subscriber import Subscriber
-from RabbitSpider.utils.control import SettingManager
+from RabbitSpider.utils.control import SettingManager, MiddlewareManager
 from RabbitSpider.utils.control import TaskManager, PipelineManager, FilterManager
 
 
@@ -22,12 +22,14 @@ class Crawler(object):
         self.subscriber = Subscriber()
         self.settings.update(spider.custom_settings)
         self.logger = Logger(self.settings, spider.name)
+        self.download = CurlDownload(self.settings)
+        self.session = self.download.session
         self.spider = spider(self)
         self.scheduler = Scheduler(self.settings)
         self.filter = FilterManager(self)
         self.pipeline = PipelineManager(self)
         self.task_manager = TaskManager(self.task_count)
-        self.download = CurlDownload(self)
+        self.middlewares = MiddlewareManager(self)
         loop = asyncio.get_running_loop()
         loop.set_exception_handler(self.custom_exception_handler)
 

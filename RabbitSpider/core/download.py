@@ -1,15 +1,12 @@
 from curl_cffi.requests import AsyncSession
 from RabbitSpider import Response, Request
-from RabbitSpider.utils.control import MiddlewareManager
 from RabbitSpider.exceptions import RabbitExpect
 
 
 class CurlDownload(object):
-    def __init__(self, crawler):
-        self.crawler = crawler
-        self.impersonate = crawler.settings.get('IMPERSONATE')
-        self.http_version = crawler.settings.get('HTTP_VERSION')
-        self.middlewares = MiddlewareManager(crawler)
+    def __init__(self, settings):
+        self.impersonate = settings.get('IMPERSONATE')
+        self.http_version = settings.get('HTTP_VERSION')
         self.session = AsyncSession(verify=False)
 
     async def fetch(self, request):
@@ -39,16 +36,3 @@ class CurlDownload(object):
         if res:
             response = Response(res)
             return response
-
-    async def send(self, request: Request):
-        try:
-            resp = await self.middlewares.process_request(self.fetch, request)
-        except Exception as exc:
-            resp = await self.middlewares.process_exception(request, exc)
-        if isinstance(resp, Response):
-            resp = await self.middlewares.process_response(request, resp)
-        if isinstance(resp, Request):
-            return request, None
-        if not resp:
-            return None, None
-        return request, resp

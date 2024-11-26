@@ -1,11 +1,11 @@
 import pickle
 import asyncio
 from aio_pika import IncomingMessage
+from aio_pika.exceptions import QueueEmpty
 from RabbitSpider import Request
 from RabbitSpider.items.item import BaseItem
 from RabbitSpider.exceptions import RabbitExpect
 from collections.abc import AsyncGenerator, Coroutine, Generator
-from aio_pika.exceptions import QueueEmpty, ChannelNotFoundEntity
 
 
 class Engine(object):
@@ -18,7 +18,7 @@ class Engine(object):
         self.scheduler = crawler.scheduler
         self.filter = crawler.filter
         self.task_manager = crawler.task_manager
-        self.download = crawler.download
+        self.middlewares = crawler.middlewares
         self.pipeline = crawler.pipeline
         self.logger = crawler.logger
 
@@ -29,7 +29,6 @@ class Engine(object):
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
-        await self.scheduler.delete_queue(self.spider.name)
         await self.scheduler.close()
         await self.pipeline.close_spider()
 
@@ -68,11 +67,10 @@ class Engine(object):
                 incoming_message: IncomingMessage = await self.scheduler.consumer(self.spider.name)
             except QueueEmpty:
                 if self.task_manager.all_done():
+                    await self.scheduler.delete_queue(self.spider.name)
                     break
                 else:
                     continue
-            except ChannelNotFoundEntity:
-                break
             await self.task_manager.semaphore.acquire()
             self.task_manager.create_task(self.deal_resp(incoming_message))
 
@@ -84,7 +82,7 @@ class Engine(object):
     async def deal_resp(self, incoming_message: IncomingMessage):
         ret = pickle.loads(incoming_message.body)
         self.logger.info(f'消费数据：{ret}')
-        request, response = await self.download.send(Request(**ret))
+        request, response = await self.middlewares.send(Request(**ret))
         if response:
             callback = getattr(self.spider, ret['callback'])
             result = callback(request, response)

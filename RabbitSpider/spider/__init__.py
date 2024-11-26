@@ -10,6 +10,7 @@ class Spider(object):
         crawler.subscriber.subscribe(self.spider_opened, event.spider_opened)
         crawler.subscriber.subscribe(self.spider_closed, event.spider_closed)
         crawler.subscriber.subscribe(self.spider_error, event.spider_error)
+        self.session = crawler.session
         self.logger = crawler.logger
 
     async def start_requests(self):

@@ -123,7 +123,7 @@ class MiddlewareManager(object):
             if hasattr(middleware_obj, 'process_exception'):
                 self.methods['process_exception'].append(getattr(middleware_obj, 'process_exception'))
 
-    async def process_request(self, fetch, request):
+    async def process_request(self, request):
         for method in self.methods['process_request']:
             result = await method(request, self.crawler.spider)
             if isinstance(result, (Request, Response)):
@@ -131,7 +131,7 @@ class MiddlewareManager(object):
             if result:
                 break
         else:
-            return await fetch(request.to_dict())
+            return await self.crawler.download.fetch(request.to_dict())
 
     async def process_response(self, request, response):
         for method in reversed(self.methods['process_response']):
@@ -152,6 +152,19 @@ class MiddlewareManager(object):
                 break
         else:
             raise exc
+
+    async def send(self, request: Request):
+        try:
+            resp = await self.process_request(request)
+        except Exception as exc:
+            resp = await self.process_exception(request, exc)
+        if isinstance(resp, Response):
+            resp = await self.process_response(request, resp)
+        if isinstance(resp, Request):
+            return request, None
+        if not resp:
+            return None, None
+        return request, resp
 
 
 class FilterManager(object):
