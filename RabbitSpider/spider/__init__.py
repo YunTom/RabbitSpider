@@ -9,12 +9,12 @@ class Spider(object):
     custom_settings: dict = {}
 
     def __init__(self, crawler):
+        self.session: AsyncSession = crawler.session
+        self.logger: Logger = crawler.logger
         crawler.subscriber.subscribe(self.spider_opened, event.spider_opened)
         crawler.subscriber.subscribe(self.spider_closed, event.spider_closed)
         crawler.subscriber.subscribe(self.spider_error, event.spider_error)
-        self.session: AsyncSession = crawler.session
-        self.logger: Logger = crawler.logger
-
+        
     async def start_requests(self):
         """初始请求"""
         raise NotImplementedError
