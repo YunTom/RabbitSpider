@@ -1,9 +1,11 @@
 from RabbitSpider.utils.log import Logger
+from RabbitSpider.utils.control import SettingManager
 
 
 class BasePipeline(object):
     def __init__(self, crawler):
         self.logger: Logger = crawler.logger
+        self.settings: SettingManager = crawler.settings
 
     async def open_spider(self, spider):
         """初始化数据库"""
