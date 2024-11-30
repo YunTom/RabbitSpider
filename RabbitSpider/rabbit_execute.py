@@ -90,4 +90,4 @@ async def batch_go(spiders: List[Type[Spider]], task_pool: int = 10):
             await asyncio.sleep(1)
 
 
-__all__ = [go, batch_go]
+__all__ = ['go', 'batch_go']
