@@ -81,7 +81,6 @@ class Engine(object):
 
     async def deal_resp(self, incoming_message: IncomingMessage):
         ret = pickle.loads(incoming_message.body)
-        self.logger.info(f'消费数据：{ret}')
         request, response = await self.middlewares.send(Request(**ret))
         if response:
             callback = getattr(self.spider, ret['callback'])

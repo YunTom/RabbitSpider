@@ -131,6 +131,7 @@ class MiddlewareManager(object):
             if result:
                 break
         else:
+            self.crawler.logger.info(f'消费数据：{request.to_dict()}')
             return await self.crawler.download.fetch(request.to_dict())
 
     async def process_response(self, request, response):
