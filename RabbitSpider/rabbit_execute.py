@@ -88,6 +88,3 @@ async def batch_go(spiders: List[Type[Spider]], task_pool: int = 10):
             break
         else:
             await asyncio.sleep(1)
-
-
-__all__ = ['go', 'batch_go']
