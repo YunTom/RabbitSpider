@@ -10,8 +10,8 @@ class Spider(object):
     custom_settings: dict = {}
 
     def __init__(self, crawler):
-        self.session: AsyncSession = crawler.session
         self.logger: Logger = crawler.logger
+        self.session: AsyncSession = crawler.session
         self.settings: SettingManager = crawler.settings
         crawler.subscriber.subscribe(self.spider_opened, event.spider_opened)
         crawler.subscriber.subscribe(self.spider_closed, event.spider_closed)
