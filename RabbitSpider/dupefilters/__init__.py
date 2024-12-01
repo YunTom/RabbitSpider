@@ -1,13 +1,15 @@
 import json
 import hashlib
 from io import BytesIO
-from RabbitSpider.http.request import Request
 from urllib.parse import urlencode
+from RabbitSpider.http.request import Request
+
+from RabbitSpider.utils.control import SettingManager
 
 
 class DupeFilter(object):
     def __init__(self, crawler):
-        pass
+        self.settings: SettingManager = crawler.settings
 
     def request_fingerprint(self, request: Request):
         if isinstance(request.data, (dict, list, tuple)):
