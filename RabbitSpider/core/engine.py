@@ -1,9 +1,9 @@
 import pickle
 import asyncio
+from RabbitSpider import Request
+from RabbitSpider import BaseItem
 from aio_pika import IncomingMessage
 from aio_pika.exceptions import QueueEmpty
-from RabbitSpider import Request
-from RabbitSpider.items.item import BaseItem
 from RabbitSpider.exceptions import RabbitExpect
 from collections.abc import AsyncGenerator, Coroutine, Generator
 
