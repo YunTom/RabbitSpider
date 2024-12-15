@@ -23,6 +23,12 @@ class BaseItem(metaclass=ItemMeta):
     def __getitem__(self, item):
         return self._values[item]
 
+    def __contains__(self, item):
+        if item in self._values:
+            return True
+        else:
+            return False
+
     def __iter__(self):
         return iter(self._values)
 
