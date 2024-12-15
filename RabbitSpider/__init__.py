@@ -3,6 +3,7 @@ import os
 import sys
 from RabbitSpider.http.request import Request
 from RabbitSpider.http.response import Response
+from RabbitSpider.items.item import BaseItem
 from RabbitSpider.rabbit_execute import go, batch_go
 
 if sys.platform == 'win32':
@@ -23,4 +24,4 @@ logo = r"""
 """
 sys.stdout.write(f'\033[0;35;1m{logo}\033[0m')
 
-__all__ = ['Request', 'Response', 'go', 'batch_go']
+__all__ = ['Request', 'Response', 'BaseItem', 'go', 'batch_go']
