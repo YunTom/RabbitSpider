@@ -1,3 +1,4 @@
+from typing import Generator
 from RabbitSpider import Request, Response, event, BaseItem
 from RabbitSpider.utils.log import Logger
 from RabbitSpider.utils.control import SettingManager
@@ -19,11 +20,11 @@ class Spider(object):
         crawler.subscriber.subscribe(self.response_received, event.response_received)
         crawler.subscriber.subscribe(self.item_scraped, event.item_scraped)
 
-    async def start_requests(self) -> Request | None:
+    async def start_requests(self) -> Generator[Request] | None:
         """初始请求"""
         raise NotImplementedError
 
-    async def parse(self, request: Request, response: Response) -> Request | Response | BaseItem | None:
+    async def parse(self, request: Request, response: Response) -> Generator[Request | BaseItem] | None:
         """默认回调"""
         pass
 

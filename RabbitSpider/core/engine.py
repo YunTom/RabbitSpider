@@ -6,7 +6,7 @@ from RabbitSpider import event
 from aio_pika import IncomingMessage
 from aio_pika.exceptions import QueueEmpty
 from RabbitSpider.exceptions import RabbitExpect
-from collections.abc import AsyncGenerator, Coroutine, Generator
+from typing import AsyncGenerator, Coroutine, Generator
 
 
 class Engine(object):
