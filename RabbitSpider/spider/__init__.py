@@ -1,6 +1,6 @@
 from typing import AsyncGenerator
-from RabbitSpider import Request, Response, event, BaseItem
 from RabbitSpider.utils.log import Logger
+from RabbitSpider import Request, Response, event, BaseItem
 from RabbitSpider.utils.control import SettingManager
 from curl_cffi.requests import AsyncSession
 
