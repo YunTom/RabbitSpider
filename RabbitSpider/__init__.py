@@ -1,6 +1,7 @@
 import asyncio
 import os
 import sys
+from RabbitSpider.utils import event
 from RabbitSpider.http.request import Request
 from RabbitSpider.http.response import Response
 from RabbitSpider.items.item import BaseItem
@@ -24,4 +25,4 @@ logo = r"""
 """
 sys.stdout.write(f'\033[0;35;1m{logo}\033[0m')
 
-__all__ = ['Request', 'Response', 'BaseItem', 'go', 'batch_go']
+__all__ = ['Request', 'Response', 'BaseItem', 'event', 'go', 'batch_go']

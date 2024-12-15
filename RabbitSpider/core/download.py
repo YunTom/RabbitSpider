@@ -1,5 +1,5 @@
 from curl_cffi.requests import AsyncSession
-from RabbitSpider import Response, Request
+from RabbitSpider import Response
 from RabbitSpider.exceptions import RabbitExpect
 
 

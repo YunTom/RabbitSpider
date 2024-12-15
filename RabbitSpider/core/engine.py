@@ -2,6 +2,7 @@ import pickle
 import asyncio
 from RabbitSpider import Request
 from RabbitSpider import BaseItem
+from RabbitSpider import event
 from aio_pika import IncomingMessage
 from aio_pika.exceptions import QueueEmpty
 from RabbitSpider.exceptions import RabbitExpect
@@ -39,6 +40,7 @@ class Engine(object):
                     self.logger.info(f'生产数据：{res.to_dict()}')
                     await self.scheduler.producer(queue=self.spider.name, body=res.to_dict())
             elif isinstance(res, BaseItem):
+                await self.subscriber.notify(event.item_scraped, self.spider, res)
                 await self.pipeline.process_item(res)
 
         if isinstance(result, AsyncGenerator):
@@ -81,8 +83,11 @@ class Engine(object):
 
     async def deal_resp(self, incoming_message: IncomingMessage):
         ret = pickle.loads(incoming_message.body)
-        request, response = await self.middlewares.send(Request(**ret))
+        request = Request(**ret)
+        await self.subscriber.notify(event.request_received, self.spider, request)
+        request, response = await self.middlewares.send(request)
         if response:
+            await self.subscriber.notify(event.response_received, self.spider, response)
             callback = getattr(self.spider, ret['callback'])
             result = callback(request, response)
             result and await self.routing(result)
