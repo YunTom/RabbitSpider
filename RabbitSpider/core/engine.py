@@ -82,14 +82,12 @@ class Engine(object):
         await asyncio.Future()
 
     async def deal_resp(self, incoming_message: IncomingMessage):
-        ret = pickle.loads(incoming_message.body)
-        request = Request(**ret)
+        request = Request(**pickle.loads(incoming_message.body))
         await self.subscriber.notify(event.request_received, request)
         request, response = await self.middlewares.send(request)
         if response:
-            await self.subscriber.notify(event.response_received, self.spider, response)
-            callback = getattr(self.spider, ret['callback'])
-            result = callback(request, response)
+            await self.subscriber.notify(event.response_received, response)
+            result = getattr(self.spider, request.callback)(request, response)
             result and await self.routing(result)
         elif request:
             await self.routing(request)
