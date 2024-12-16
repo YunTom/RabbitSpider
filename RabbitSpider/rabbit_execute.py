@@ -44,18 +44,18 @@ class Crawler(object):
     async def process(self):
         async with Engine(self) as engine:
             self.logger.info(f'任务{self.spider.name}启动')
-            await self.subscriber.notify(event.spider_opened, self.spider)
+            await self.subscriber.notify(event.spider_opened)
             try:
                 await engine.start()
             except CancelledError as exc:
                 self.logger.error(f'任务{self.spider.name}异常')
-                await self.subscriber.notify(event.spider_error, self.spider, exc)
+                await self.subscriber.notify(event.spider_error, exc)
             except Exception as exc:
                 self.logger.error(f'任务{self.spider.name}异常')
-                await self.subscriber.notify(event.spider_error, self.spider, exc)
+                await self.subscriber.notify(event.spider_error, exc)
                 print_exc()
             else:
-                await self.subscriber.notify(event.spider_closed, self.spider)
+                await self.subscriber.notify(event.spider_closed)
                 self.logger.info(f'任务{self.spider.name}结束')
 
 
