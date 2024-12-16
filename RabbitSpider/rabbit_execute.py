@@ -48,10 +48,10 @@ class Crawler(object):
             try:
                 await engine.start()
             except CancelledError as exc:
-                self.logger.error(f'任务{self.spider.name}异常')
+                self.logger.error(f'任务{self.spider.name}异常: {exc}')
                 await self.subscriber.notify(event.spider_error, exc)
             except Exception as exc:
-                self.logger.error(f'任务{self.spider.name}异常')
+                self.logger.error(f'任务{self.spider.name}异常: {exc}')
                 await self.subscriber.notify(event.spider_error, exc)
                 print_exc()
             else:
