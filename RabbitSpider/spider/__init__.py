@@ -1,9 +1,9 @@
 from asyncio import CancelledError
 from typing import AsyncGenerator, Union
+from curl_cffi.requests import AsyncSession
 from RabbitSpider.utils.log import Logger
 from RabbitSpider import Request, Response, event, BaseItem
 from RabbitSpider.utils.control import SettingManager
-from curl_cffi.requests import AsyncSession
 
 
 class Spider(object):
