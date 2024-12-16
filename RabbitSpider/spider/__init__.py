@@ -28,26 +28,26 @@ class Spider(object):
         """默认回调"""
         pass
 
-    async def spider_opened(self, spider) -> None:
+    async def spider_opened(self) -> None:
         """爬虫启动时触发"""
         pass
 
-    async def spider_closed(self, spider) -> None:
+    async def spider_closed(self) -> None:
         """爬虫关闭时触发"""
         pass
 
-    async def spider_error(self, spider, error) -> None:
+    async def spider_error(self, error) -> None:
         """爬虫异常时触发"""
         pass
 
-    async def request_received(self, spider, request) -> None:
+    async def request_received(self, request) -> None:
         """发起请求时触发"""
         pass
 
-    async def response_received(self, spider, response) -> None:
+    async def response_received(self, response) -> None:
         """获取到响应时触发"""
         pass
 
-    async def item_scraped(self, spider, item) -> None:
+    async def item_scraped(self, item) -> None:
         """生成item时触发"""
         pass
