@@ -13,9 +13,6 @@ class Response:
         self.cookies = {k: v for k, v in res.cookies.items()}
         self.__r = parsel.Selector(self.text)
 
-    def __str__(self):
-        return self.text
-
     @property
     def text(self):
         if not self.content:
