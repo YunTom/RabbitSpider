@@ -2,7 +2,8 @@ import pickle
 import asyncio
 from aio_pika import IncomingMessage
 from aio_pika.exceptions import QueueEmpty
-from RabbitSpider import Request, BaseItem, event
+from RabbitSpider.utils import event
+from RabbitSpider import Request, BaseItem
 from RabbitSpider.exceptions import RabbitExpect
 from typing import AsyncGenerator, Coroutine, Generator
 
