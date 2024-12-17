@@ -62,7 +62,7 @@ class Response:
         return text
 
     def json(self):
-        return return json.loads(re.findall('[^.*?\(]?(\{.*\})[\).*]?', self.text, re.DOTALL)[0], strict=False)
+        return json.loads(re.findall('[^.*?\(]?(\{.*\})[\).*]?', self.text, re.DOTALL)[0], strict=False)
 
     def xpath(self, x):
         return self.__r.xpath(x)
