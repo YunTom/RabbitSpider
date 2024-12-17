@@ -19,6 +19,7 @@ class Logger(object):
                    colorize=True,
                    level='INFO',
                    format="<green>{time:YYYY-MM-DD HH:mm:ss}</green> | <level>{level}</level> | <cyan>{extra[scope]}</cyan> | <level>{message}</level>")
+
         self._logger = logger.bind(scope=name)
 
     def info(self, msg):
