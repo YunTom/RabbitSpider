@@ -1,4 +1,5 @@
-import re, demjson
+import re
+import json
 import chardet
 import parsel
 from w3lib.encoding import http_content_type_encoding, html_to_unicode
@@ -61,7 +62,7 @@ class Response:
         return text
 
     def json(self):
-        return demjson.decode(re.findall('[^.*?\(]?(\{.*\})[\).*]?', js, re.DOTALL)[0])
+        return return json.loads(re.findall('[^.*?\(]?(\{.*\})[\).*]?', self.text, re.DOTALL)[0], strict=False)
 
     def xpath(self, x):
         return self.__r.xpath(x)
