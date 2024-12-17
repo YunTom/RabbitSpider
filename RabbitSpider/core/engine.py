@@ -41,6 +41,8 @@ class Engine(object):
             elif isinstance(res, BaseItem):
                 await self.subscriber.notify(event.item_scraped, res)
                 await self.pipeline.process_item(res)
+            elif res is None:
+                pass
             else:
                 raise TypeError('回调函数返回类型错误！')
 
