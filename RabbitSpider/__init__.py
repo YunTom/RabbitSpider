@@ -1,7 +1,6 @@
 import asyncio
 import os
 import sys
-from RabbitSpider.utils import event
 from RabbitSpider.http.request import Request
 from RabbitSpider.http.response import Response
 from RabbitSpider.items.item import BaseItem
