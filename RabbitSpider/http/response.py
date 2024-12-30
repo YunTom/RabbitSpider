@@ -61,6 +61,7 @@ class Response:
                         text = self.content.decode('utf-8', "ignore")
         return text
 
+    @property
     def json(self):
         return json.loads(re.findall('[^.*?\(]?(\{.*\})[\).*]?', self.text, re.DOTALL)[0], strict=False)
 

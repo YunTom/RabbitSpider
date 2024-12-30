@@ -1,3 +1,4 @@
+from copy import deepcopy
 from RabbitSpider.items import ItemMeta
 
 
@@ -50,6 +51,9 @@ class BaseItem(metaclass=ItemMeta):
             raise
         else:
             return super(BaseItem, self).__getattribute__(item)
+
+    def copy(self):
+        return deepcopy(self)
 
     def to_dict(self):
         return self._values
