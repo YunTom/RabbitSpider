@@ -1,7 +1,6 @@
 import pickle
 import asyncio
 from aio_pika import IncomingMessage
-from aio_pika.exceptions import QueueEmpty
 from RabbitSpider.utils import event
 from RabbitSpider import Request, BaseItem
 from RabbitSpider.exceptions import RabbitExpect
@@ -68,16 +67,16 @@ class Engine(object):
 
     async def crawl(self):
         while True:
-            try:
-                incoming_message: IncomingMessage = await self.scheduler.consumer(self.spider.name)
-            except QueueEmpty:
+            incoming_message: IncomingMessage = await self.scheduler.consumer(self.spider.name)
+            if incoming_message:
+                await self.task_manager.semaphore.acquire()
+                self.task_manager.create_task(self.deal_resp(incoming_message))
+            else:
                 if self.task_manager.all_done():
                     await self.scheduler.delete_queue(self.spider.name)
                     break
                 else:
                     continue
-            await self.task_manager.semaphore.acquire()
-            self.task_manager.create_task(self.deal_resp(incoming_message))
 
     async def consume(self):
         await self.scheduler.consumer(queue=self.spider.name, callback=self.deal_resp,

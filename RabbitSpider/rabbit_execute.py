@@ -25,7 +25,7 @@ class Crawler(object):
         self.download = CurlDownload(self.settings)
         self.session = self.download.session
         self.spider = spider_cls(self)
-        self.scheduler = Scheduler(self.settings)
+        self.scheduler = Scheduler(self.logger,self.settings)
         self.filter = FilterManager(self)
         self.pipeline = PipelineManager(self)
         self.task_manager = TaskManager(self.task_count)
@@ -48,10 +48,10 @@ class Crawler(object):
             try:
                 await engine.start()
             except CancelledError as exc:
-                self.logger.error(f'任务{self.spider.name}异常: {exc}')
+                self.logger.error(f'任务{self.spider.name}异常: {exc.__class__.__name__}')
                 await self.subscriber.notify(event.spider_error, exc)
             except Exception as exc:
-                self.logger.error(f'任务{self.spider.name}异常: {exc}')
+                self.logger.error(f'任务{self.spider.name}异常: {exc.__class__.__name__}')
                 await self.subscriber.notify(event.spider_error, exc)
                 print_exc()
             else:
