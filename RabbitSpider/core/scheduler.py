@@ -1,7 +1,7 @@
 import pickle
 from typing import Callable, Optional
-from aio_pika import connect_robust, Message, pool
 from asyncio.exceptions import TimeoutError
+from aio_pika import connect_robust, Message, pool
 from aio_pika.exceptions import AMQPConnectionError
 
 
