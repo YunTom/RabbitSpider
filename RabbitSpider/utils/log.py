@@ -6,7 +6,7 @@ from loguru import logger
 class Logger(object):
     def __init__(self, settings, name):
         logger.remove()
-        log_path = os.path.join(settings.get('BOT_DIR'), settings.get('LOG_FILE')) if settings.get(
+        log_path = os.path.join(os.path.abspath('../..'), settings.get('LOG_FILE')) if settings.get(
             'LOG_FILE') and settings.get('LOG_FILE').startswith('.') else settings.get('LOG_FILE')
         if log_path:
             logger.add("%s/rabbit_{time:YYYY-MM-DD}.log" % log_path,
