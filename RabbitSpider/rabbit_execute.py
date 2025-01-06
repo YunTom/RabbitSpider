@@ -25,7 +25,7 @@ class Crawler(object):
         self.download = CurlDownload(self.settings)
         self.session = self.download.session
         self.spider = spider_cls(self)
-        self.scheduler = Scheduler(self.logger,self.settings)
+        self.scheduler = Scheduler(self.settings)
         self.filter = FilterManager(self)
         self.pipeline = PipelineManager(self)
         self.task_manager = TaskManager(self.task_count)
