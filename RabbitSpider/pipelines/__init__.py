@@ -3,11 +3,11 @@ from RabbitSpider.utils.control import SettingManager
 
 
 class BasePipeline(object):
-    def __init__(self, crawler):
-        self.logger: Logger = crawler.logger
-        self.settings: SettingManager = crawler.settings
+    def __init__(self, settings):
+        self.logger = Logger(settings)
+        self.settings: SettingManager = settings
 
-    async def open_spider(self, spider):
+    async def open_spider(self):
         """初始化数据库"""
         pass
 
@@ -15,6 +15,6 @@ class BasePipeline(object):
         """入库逻辑"""
         pass
 
-    async def close_spider(self, spider):
+    async def close_spider(self):
         """关闭连接"""
         pass

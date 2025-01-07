@@ -1,11 +1,11 @@
 import asyncio
 from collections import defaultdict
 from importlib import import_module
-from typing import Final, Dict, List, Callable
 from asyncio import Task, Future, Semaphore
-from RabbitSpider import Request
-from RabbitSpider import Response
+from RabbitSpider import Request, Response
 from RabbitSpider import default_settings
+from typing import Final, Dict, List, Callable
+from RabbitSpider.core.download import CurlDownload
 
 
 def load_class(_path):
@@ -78,15 +78,14 @@ class TaskManager(object):
 
 
 class PipelineManager(object):
-    def __init__(self, crawler):
-        self.crawler = crawler
-        self.spider = crawler.spider
+    def __init__(self, settings):
+        self.settings = settings
         self.methods: Dict[str, List[Callable]] = defaultdict(list)
-        self._add_pipe(crawler.settings.getlist('ITEM_PIPELINES'))
+        self._add_pipe(settings.getlist('ITEM_PIPELINES'))
 
     def _add_pipe(self, pipelines):
         for pipeline in pipelines:
-            pipeline_obj = load_class(pipeline)(self.crawler)
+            pipeline_obj = load_class(pipeline)(self.settings)
             if hasattr(pipeline_obj, 'open_spider'):
                 self.methods['open_spider'].append(getattr(pipeline_obj, 'open_spider'))
             if hasattr(pipeline_obj, 'process_item'):
@@ -96,26 +95,27 @@ class PipelineManager(object):
 
     async def open_spider(self):
         for method in self.methods['open_spider']:
-            await method(self.spider)
+            await method()
 
-    async def process_item(self, req):
+    async def process_item(self, req, spider):
         for method in self.methods['process_item']:
-            await method(req, self.spider)
+            await method(req, spider)
 
     async def close_spider(self):
         for method in self.methods['close_spider']:
-            await method(self.spider)
+            await method()
 
 
 class MiddlewareManager(object):
-    def __init__(self, crawler):
-        self.crawler = crawler
+    def __init__(self, settings):
+        self.settings = settings
         self.methods: Dict[str, List[Callable]] = defaultdict(list)
-        self._add_middleware(self.crawler.settings.getlist('MIDDLEWARES'))
+        self._add_middleware(settings.getlist('MIDDLEWARES'))
+        self.download = CurlDownload(settings)
 
     def _add_middleware(self, middlewares):
         for middleware in middlewares:
-            middleware_obj = load_class(middleware)(self.crawler)
+            middleware_obj = load_class(middleware)(self.settings)
             if hasattr(middleware_obj, 'process_request'):
                 self.methods['process_request'].append(getattr(middleware_obj, 'process_request'))
             if hasattr(middleware_obj, 'process_response'):
@@ -123,20 +123,19 @@ class MiddlewareManager(object):
             if hasattr(middleware_obj, 'process_exception'):
                 self.methods['process_exception'].append(getattr(middleware_obj, 'process_exception'))
 
-    async def process_request(self, request):
+    async def process_request(self, spider, request):
         for method in self.methods['process_request']:
-            result = await method(request, self.crawler.spider)
+            result = await method(request, spider)
             if isinstance(result, (Request, Response)):
                 return result
             if result:
                 break
         else:
-            self.crawler.logger.info(f'消费数据：{request.to_dict()}')
-            return await self.crawler.download.fetch(request.to_dict())
+            return await self.download.fetch(spider.session, request.to_dict())
 
-    async def process_response(self, request, response):
+    async def process_response(self, spider, request, response):
         for method in reversed(self.methods['process_response']):
-            result = await method(request, response, self.crawler.spider)
+            result = await method(request, response, spider)
             if isinstance(result, (Request, Response)):
                 return result
             if result:
@@ -144,9 +143,9 @@ class MiddlewareManager(object):
         else:
             return response
 
-    async def process_exception(self, request, exc):
+    async def process_exception(self, spider, request, exc):
         for method in self.methods['process_exception']:
-            result = await method(request, exc, self.crawler.spider)
+            result = await method(request, exc, spider)
             if isinstance(result, (Request, Response)):
                 return result
             if result:
@@ -154,13 +153,13 @@ class MiddlewareManager(object):
         else:
             raise exc
 
-    async def send(self, request: Request):
+    async def send(self, spider, request: Request):
         try:
-            resp = await self.process_request(request)
+            resp = await self.process_request(spider, request)
         except Exception as exc:
-            resp = await self.process_exception(request, exc)
+            resp = await self.process_exception(spider, request, exc)
         if isinstance(resp, Response):
-            resp = await self.process_response(request, resp)
+            resp = await self.process_response(spider, request, resp)
         if isinstance(resp, Request):
             return request, None
         if not resp:
@@ -169,10 +168,10 @@ class MiddlewareManager(object):
 
 
 class FilterManager(object):
-    def __init__(self, crawler):
-        filter_cls = crawler.settings.get('DUPEFILTER_CLASS')
+    def __init__(self, settings):
+        filter_cls = settings.get('DUPEFILTER_CLASS')
         if filter_cls:
-            self.filter_obj = load_class(filter_cls)(crawler)
+            self.filter_obj = load_class(filter_cls)(settings)
         else:
             self.filter_obj = None
 

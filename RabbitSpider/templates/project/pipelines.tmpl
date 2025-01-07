@@ -2,14 +2,14 @@ from RabbitSpider.pipelines import BasePipeline
 
 
 class Pipeline(BasePipeline):
-    async def open_spider(self, spider):
+    async def open_spider(self):
         """初始化数据库"""
         pass
 
     async def process_item(self, item, spider):
         """入库逻辑"""
-        self.logger.info(item.to_dict())
+        self.logger.info(item.to_dict(), spider.name)
 
-    async def close_spider(self, spider):
+    async def close_spider(self):
         """关闭连接"""
         pass

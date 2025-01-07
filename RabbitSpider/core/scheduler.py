@@ -49,12 +49,12 @@ class Scheduler(object):
                 Message(body=ret, delivery_mode=2, priority=body['retry_times']), routing_key=queue, timeout=60)
 
     @retry_exception
-    async def consumer(self, queue: str, callback: Optional[Callable] = None, prefetch: int = 1):
+    async def consumer(self, spider, callback: Optional[Callable] = None, prefetch: int = 1):
         async with self.channel_pool.acquire() as channel:
-            queue = await channel.declare_queue(name=queue, durable=True, passive=True, timeout=60)
+            queue = await channel.declare_queue(name=spider.name, durable=True, passive=True, timeout=60)
             if callback:
                 await channel.set_qos(prefetch_count=prefetch)
-                await queue.consume(callback=callback)
+                await queue.consume(callback=lambda incoming_message: callback(spider, incoming_message))
             else:
                 return await queue.get(fail=False, timeout=60)
 

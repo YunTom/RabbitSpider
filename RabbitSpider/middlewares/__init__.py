@@ -5,9 +5,9 @@ from RabbitSpider.utils.control import SettingManager
 
 
 class BaseMiddleware:
-    def __init__(self, crawler):
-        self.logger: Logger = crawler.logger
-        self.settings: SettingManager = crawler.settings
+    def __init__(self, settings):
+        self.logger = Logger(settings)
+        self.settings: SettingManager = settings
 
     async def process_request(self, request, spider) -> None | Request | Response:
         """请求预处理"""

@@ -2,25 +2,22 @@ from asyncio import CancelledError
 from typing import AsyncGenerator, Union
 from curl_cffi.requests import AsyncSession
 from RabbitSpider.utils import event
-from RabbitSpider.utils.log import Logger
 from RabbitSpider import Request, Response, BaseItem
-from RabbitSpider.utils.control import SettingManager
+from RabbitSpider.utils.subscriber import Subscriber
 
 
 class Spider(object):
     name: str
-    custom_settings: dict = {}
 
-    def __init__(self, crawler):
-        self.logger: Logger = crawler.logger
-        self.session: AsyncSession = crawler.session
-        self.settings: SettingManager = crawler.settings
-        crawler.subscriber.subscribe(self.spider_opened, event.spider_opened)
-        crawler.subscriber.subscribe(self.spider_closed, event.spider_closed)
-        crawler.subscriber.subscribe(self.spider_error, event.spider_error)
-        crawler.subscriber.subscribe(self.request_received, event.request_received)
-        crawler.subscriber.subscribe(self.response_received, event.response_received)
-        crawler.subscriber.subscribe(self.item_scraped, event.item_scraped)
+    def __init__(self):
+        self.subscriber = Subscriber()
+        self.session = AsyncSession(verify=False)
+        self.subscriber.subscribe(self.spider_opened, event.spider_opened)
+        self.subscriber.subscribe(self.spider_closed, event.spider_closed)
+        self.subscriber.subscribe(self.spider_error, event.spider_error)
+        self.subscriber.subscribe(self.request_received, event.request_received)
+        self.subscriber.subscribe(self.response_received, event.response_received)
+        self.subscriber.subscribe(self.item_scraped, event.item_scraped)
 
     async def start_requests(self) -> AsyncGenerator[Request, None]:
         """初始请求"""

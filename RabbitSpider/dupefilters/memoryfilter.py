@@ -2,8 +2,8 @@ from RabbitSpider.dupefilters import DupeFilter
 
 
 class MemoryFilter(DupeFilter):
-    def __init__(self, crawler):
-        super().__init__(crawler)
+    def __init__(self, settings):
+        super().__init__(settings)
         self.repeat = set()
 
     def request_seen(self, request):

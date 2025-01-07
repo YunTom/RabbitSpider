@@ -3,14 +3,12 @@ import hashlib
 from io import BytesIO
 from urllib.parse import urlencode
 from RabbitSpider.http.request import Request
-from RabbitSpider.utils.log import Logger
 from RabbitSpider.utils.control import SettingManager
 
 
 class DupeFilter(object):
-    def __init__(self, crawler):
-        self.logger: Logger = crawler.logger
-        self.settings: SettingManager = crawler.settings
+    def __init__(self, settings):
+        self.settings: SettingManager = settings
 
     def request_fingerprint(self, request: Request):
         if isinstance(request.data, (dict, list, tuple)):

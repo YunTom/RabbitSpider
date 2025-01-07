@@ -5,9 +5,9 @@ from RabbitSpider.middlewares import BaseMiddleware
 
 
 class DownloadDelayMiddleware(BaseMiddleware):
-    def __init__(self, crawler):
-        super().__init__(crawler)
-        self.download_delay = crawler.settings.get('DOWNLOAD_DELAY')
+    def __init__(self, settings):
+        super().__init__(settings)
+        self.download_delay = settings.get('DOWNLOAD_DELAY')
 
     async def process_request(self, request, spider):
         if self.download_delay:
