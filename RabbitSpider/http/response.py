@@ -63,10 +63,10 @@ class Response:
 
     @property
     def json(self):
-         result = re.findall('[.*?(]?(\[?{.*}]?)[).*]?', self.text, re.DOTALL)
+        result = re.findall('[.*?(]?(\[?{.*}]?)[).*]?', self.text, re.DOTALL)
         if result:
             return json.loads(result[0], strict=False)
-
+            
     def xpath(self, x):
         return self.__r.xpath(x)
 
