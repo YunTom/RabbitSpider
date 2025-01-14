@@ -88,8 +88,6 @@ class Engine(object):
                 if self.task_manager.all_done():
                     await self.scheduler.delete_queue(spider.name)
                     break
-                else:
-                    continue
 
     async def consume(self, spider):
         await self.scheduler.consumer(spider, callback=self.deal_resp,
