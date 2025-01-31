@@ -24,6 +24,8 @@ logo = r"""
 """
 
 __all__ = ['Request', 'Response', 'BaseItem', 'go', 'batch_go']
+__author__ = '一纸'
+__email__ = '2395396520@qq.com'
 __version__ = '2.7.5'
 
 sys.stdout.write(f'\033[0;35;1m{logo}\033[0m')
