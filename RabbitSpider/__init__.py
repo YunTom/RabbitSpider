@@ -1,9 +1,9 @@
-import asyncio
 import os
 import sys
+import asyncio
+from RabbitSpider.items.item import BaseItem
 from RabbitSpider.http.request import Request
 from RabbitSpider.http.response import Response
-from RabbitSpider.items.item import BaseItem
 from RabbitSpider.rabbit_execute import go, batch_go
 
 if sys.platform == 'win32':
@@ -22,6 +22,8 @@ logo = r"""
 /_/ |_|  \__,_/  /_.___/ /_.___/ /_/   \__/  /____/   / .___/ /_/   \__,_/   \___/ /_/     
                                                      /_/                                   
 """
-sys.stdout.write(f'\033[0;35;1m{logo}\033[0m')
 
 __all__ = ['Request', 'Response', 'BaseItem', 'go', 'batch_go']
+__version__ = '2.7.5'
+
+sys.stdout.write(f'\033[0;35;1m{logo}\033[0m')

@@ -58,14 +58,11 @@ class Engine(object):
                 raise TypeError('回调函数返回类型错误！')
 
         if isinstance(result, AsyncGenerator):
-            async for r in result:
-                await rule(r)
+            await rule(r async for r in result)
         elif isinstance(result, Generator):
-            for r in result:
-                await rule(r)
+            await rule(r for r in result)
         elif isinstance(result, Coroutine):
-            r = await result
-            await rule(r)
+            await rule(await result)
         elif isinstance(result, Request):
             await rule(result)
         elif result is None:
