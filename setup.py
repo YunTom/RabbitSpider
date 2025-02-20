@@ -12,7 +12,7 @@ setuptools.setup(
     include_package_data=True,
     entry_points={
         'console_scripts': [
-            'rabbit = RabbitSpider.utils.template:create_project',
+            'rabbit = RabbitSpider.utils.template:cmdline',
         ],
     },
     python_requires='>=3.10',
@@ -21,10 +21,7 @@ setuptools.setup(
         'curl_cffi>=0.6.2',
         'loguru>=0.7.2',
         'parsel>=1.9.1',
-        'redis>=5.0.3',
         'w3lib>=2.1.2',
         'chardet>=5.2.0',
-        'loguru>=0.7.2',
-        'chardet>=5.2.0'
     ],
 )
