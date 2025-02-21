@@ -39,7 +39,7 @@ def template_to_file(_path, _dir, _file):
                     os.path.join(_path, 'spiders', _dir))
     for file in tmpl_file_path(_path):
         with open(file, 'r', encoding='utf-8') as f:
-            text = Template(f.read()).substitute(project=_path, dir=_dir, spider=_file, classname='Template')
+            text = Template(f.read()).substitute(project=_path, dir=_dir, spider=_file, classname='TemplateSpider')
         with open(file.replace('tmpl', 'py'), 'w', encoding='utf-8') as f:
             f.write(text)
         os.remove(file)
