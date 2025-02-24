@@ -6,8 +6,8 @@ from RabbitSpider.utils import event
 from RabbitSpider.utils.log import Logger
 from RabbitSpider import Request, BaseItem
 from RabbitSpider.exceptions import RabbitExpect
-from typing import AsyncGenerator, Coroutine, Generator
 from RabbitSpider.core.scheduler import Scheduler
+from typing import AsyncGenerator, Coroutine, Generator
 from RabbitSpider.utils.control import SettingManager, MiddlewareManager, FilterManager, PipelineManager, TaskManager
 
 
