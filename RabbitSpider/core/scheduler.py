@@ -27,6 +27,8 @@ class Scheduler(object):
                     continue
                 else:
                     return result
+            else:
+                raise AMQPConnectionError
 
         return inner
 
