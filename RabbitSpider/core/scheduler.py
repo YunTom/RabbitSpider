@@ -1,6 +1,7 @@
 import pickle
 from typing import Callable, Optional
 from asyncio.exceptions import TimeoutError
+from RabbitSpider.exceptions import RabbitExpect
 from aio_pika import connect_robust, Message, pool
 from aio_pika.exceptions import AMQPConnectionError
 
@@ -28,7 +29,7 @@ class Scheduler(object):
                 else:
                     return result
             else:
-                raise AMQPConnectionError
+                raise RabbitExpect('RabbitMq 连接超时！')
 
         return inner
 
