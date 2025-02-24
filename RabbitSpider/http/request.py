@@ -34,7 +34,7 @@ class Request(object):
 
     @property
     def url(self):
-        pattern = re.compile('http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+')
+        pattern = re.compile(r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+')
         if not re.match(pattern, self._url):
             raise ValueError(f'请检查url是否正确{self._url}')
         return self._url
