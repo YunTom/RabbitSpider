@@ -77,7 +77,7 @@ def cmdline():
 
     run_parser = subparsers.add_parser('run', help='运行一个爬虫项目')
     run_parser.add_argument('dir', help='目录')
-    run_parser.add_argument('-c', '--task_pool', type=int, default=10, help='并发数')
+    run_parser.add_argument('-p', '--task_pool', type=int, default=10, help='并发数')
 
     args = parser.parse_args()
 
