@@ -12,7 +12,7 @@ setuptools.setup(
     include_package_data=True,
     entry_points={
         'console_scripts': [
-            'rabbit = RabbitSpider.utils.template:cmdline',
+            'rabbit = RabbitSpider.utils.cmdline:execute',
         ],
     },
     python_requires='>=3.10',
