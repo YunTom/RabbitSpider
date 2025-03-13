@@ -1,9 +1,15 @@
+import os
+import re
 import sys
 import asyncio
+import time
 from typing import Type, List
+from croniter import croniter
+from datetime import datetime
 from RabbitSpider.spider import Spider
 from RabbitSpider.core.engine import Engine
 from RabbitSpider.utils.control import TaskManager
+from importlib.util import spec_from_file_location, module_from_spec
 
 
 async def go(spider_cls: Type[Spider], mode: str = 'auto', task_count: int = 1):
@@ -28,3 +34,32 @@ async def batch_go(spiders: List[Type[Spider]], task_pool: int = 10):
                 break
             else:
                 await asyncio.sleep(1)
+
+
+def runner(_dir, task_pool, cron_expression):
+    cls_list = []
+    next_time = None
+    sys.path.append(os.path.abspath('.'))
+    sys.path.append(os.path.abspath('..'))
+    for filename in os.listdir(os.path.join('spiders', _dir)):
+        if filename.endswith('.py'):
+            with open(os.path.join('spiders', _dir, filename), 'r', encoding='utf-8') as file:
+                classname = re.findall(r'class\s.*?(\w+)\s*?\(\w+\)', file.read())[0]
+                spec = spec_from_file_location(classname, os.path.join('spiders', _dir, filename))
+                module = module_from_spec(spec)
+                spec.loader.exec_module(module)
+                cls_list.append(getattr(module, classname))
+
+    if croniter.is_valid(cron_expression):
+        cron = croniter(cron_expression, datetime.now()).all_next(datetime)
+        while True:
+            now_time = datetime.strptime(datetime.now().strftime('%Y-%m-%d %H:%M'), '%Y-%m-%d %H:%M')
+            if next_time and now_time == next_time:
+                asyncio.run(batch_go(cls_list, task_pool))
+            elif not next_time or next_time < now_time:
+                next_time = next(cron)
+                print(f'下次运行时间：{next_time}')
+            else:
+                time.sleep(5)
+    else:
+        asyncio.run(batch_go(cls_list, task_pool))
