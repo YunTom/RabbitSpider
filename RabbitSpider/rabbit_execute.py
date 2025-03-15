@@ -1,8 +1,8 @@
 import os
 import re
 import sys
-import asyncio
 import time
+import asyncio
 from typing import Type, List
 from croniter import croniter
 from datetime import datetime
@@ -36,16 +36,16 @@ async def batch_go(spiders: List[Type[Spider]], task_pool: int = 10):
                 await asyncio.sleep(1)
 
 
-def runner(_dir, task_pool, cron_expression):
+def runner(directory, task_pool, cron_expression):
     cls_list = []
     next_time = None
     sys.path.append(os.path.abspath('.'))
     sys.path.append(os.path.abspath('..'))
-    for filename in os.listdir(os.path.join('spiders', _dir)):
+    for filename in os.listdir(os.path.join('spiders', directory)):
         if filename.endswith('.py'):
-            with open(os.path.join('spiders', _dir, filename), 'r', encoding='utf-8') as file:
+            with open(os.path.join('spiders', directory, filename), 'r', encoding='utf-8') as file:
                 classname = re.findall(r'class\s.*?(\w+)\s*?\(\w+\)', file.read())[0]
-                spec = spec_from_file_location(classname, os.path.join('spiders', _dir, filename))
+                spec = spec_from_file_location(classname, os.path.join('spiders', directory, filename))
                 module = module_from_spec(spec)
                 spec.loader.exec_module(module)
                 cls_list.append(getattr(module, classname))
