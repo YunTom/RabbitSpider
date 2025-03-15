@@ -54,9 +54,9 @@ def runner(directory, task_pool, cron_expression):
         cron = croniter(cron_expression, datetime.now()).all_next(datetime)
         while True:
             now_time = datetime.strptime(datetime.now().strftime('%Y-%m-%d %H:%M'), '%Y-%m-%d %H:%M')
-            if next_time and now_time == next_time:
+            if now_time == next_time:
                 asyncio.run(batch_go(cls_list, task_pool))
-            elif not next_time or next_time < now_time:
+            if not next_time or next_time <= now_time:
                 next_time = next(cron)
                 print(f'下次运行时间：{next_time}')
             else:
