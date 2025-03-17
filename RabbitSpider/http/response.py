@@ -29,7 +29,7 @@ class Response:
                         text = html_to_unicode(charset, self.body)[1]
                     else:
                         raise UnicodeDecodeError
-                except UnicodeDecodeError:
+                except (UnicodeDecodeError, KeyError):
                     try:
                         char = chardet.detect(self.content)
                         if char:
@@ -63,7 +63,7 @@ class Response:
 
     @property
     def json(self):
-        result = re.findall('[.*?(]?(\[?{.*}]?)[).*]?', self.text, re.DOTALL)
+        result = re.findall(r'[.*?(]?(\[?{.*}]?)[).*]?', self.text, re.DOTALL)
         if result:
             return json.loads(result[0], strict=False)
 
