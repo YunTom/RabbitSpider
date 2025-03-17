@@ -8,21 +8,20 @@ from RabbitSpider import Request, BaseItem
 from RabbitSpider.exceptions import RabbitExpect
 from RabbitSpider.core.scheduler import Scheduler
 from typing import AsyncGenerator, Coroutine, Generator
-from RabbitSpider.utils.control import SettingManager, MiddlewareManager, FilterManager, PipelineManager, TaskManager
+from RabbitSpider.utils.control import MiddlewareManager, FilterManager, PipelineManager, TaskManager
 
 
 class Engine(object):
 
-    def __init__(self, mode, task_count):
-        self.mode: str = mode
-        self.task_count: int = task_count
-        self.settings = SettingManager()
-        self.logger = Logger(self.settings)
-        self.scheduler = Scheduler(self.settings)
-        self.filter = FilterManager(self.settings)
-        self.pipeline = PipelineManager(self.settings)
-        self.middlewares = MiddlewareManager(self.settings)
-        self.task_manager: TaskManager = TaskManager(task_count)
+        def __init__(self, settings):
+        self.logger = Logger(settings)
+        self.mode: str = settings.get('MODE')
+        self.scheduler = Scheduler(settings)
+        self.filter = FilterManager(settings)
+        self.pipeline = PipelineManager(settings)
+        self.middlewares = MiddlewareManager(settings)
+        self.task_count: int = settings.get('TASK_COUNT')
+        self.task_manager: TaskManager = TaskManager(self.task_count)
         loop = asyncio.get_running_loop()
         loop.set_exception_handler(self.custom_exception_handler)
 
