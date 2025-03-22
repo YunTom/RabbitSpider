@@ -22,7 +22,7 @@ async def go(spider_cls: Type[Spider], mode: str = 'auto', task_count: int = 1):
             task_count = int(value)
     settings.set('MODE', mode)
     settings.set('TASK_COUNT', task_count)
-    async with Engine(mode, task_count) as engine:
+    async with Engine(settings) as engine:
         await engine.start(spider_cls())
 
 
@@ -30,7 +30,7 @@ async def batch_go(spiders: List[Type[Spider]], task_pool: int = 10):
     settings = SettingManager()
     settings.set('MODE', 'auto')
     task_group: TaskManager = TaskManager(task_pool)
-    async with Engine(mode='auto', task_count=task_pool) as engine:
+    async with Engine(settings) as engine:
         for spider_cls in spiders:
             await task_group.semaphore.acquire()
             task_group.create_task(engine.start(spider_cls()))
