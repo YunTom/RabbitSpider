@@ -13,7 +13,7 @@ from RabbitSpider.utils.control import MiddlewareManager, FilterManager, Pipelin
 
 class Engine(object):
 
-        def __init__(self, settings):
+     def __init__(self, settings):
         self.logger = Logger(settings)
         self.mode: str = settings.get('MODE')
         self.scheduler = Scheduler(settings)
