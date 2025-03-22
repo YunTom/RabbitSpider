@@ -3,7 +3,7 @@ from typing import Callable, Optional
 from asyncio.exceptions import TimeoutError
 from RabbitSpider.exceptions import RabbitExpect
 from aio_pika import connect_robust, Message, pool
-from aio_pika.exceptions import AMQPConnectionError
+from aio_pika.exceptions import AMQPConnectionError, ChannelNotFoundEntity
 
 
 class Scheduler(object):
@@ -54,7 +54,11 @@ class Scheduler(object):
     @retry_exception
     async def consumer(self, spider, callback: Optional[Callable] = None, prefetch: int = 1):
         async with self.channel_pool.acquire() as channel:
-            queue = await channel.declare_queue(name=spider.name, durable=True, passive=True, timeout=60)
+            try:
+                queue = await channel.declare_queue(name=spider.name, durable=True, passive=True, timeout=60)
+            except ChannelNotFoundEntity:
+                queue = await channel.declare_queue(name=spider.name, durable=True, arguments={"x-max-priority": 10},
+                                                    timeout=60)
             if callback:
                 await channel.set_qos(prefetch_count=prefetch)
                 await queue.consume(callback=lambda incoming_message: callback(spider, incoming_message))
