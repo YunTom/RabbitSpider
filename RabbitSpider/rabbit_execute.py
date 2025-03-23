@@ -26,10 +26,10 @@ async def go(spider_cls: Type[Spider], mode: str = 'auto', task_count: int = 1):
         await engine.start(spider_cls())
 
 
-async def batch_go(spiders: List[Type[Spider]], task_pool: int = 10):
+async def batch_go(spiders: List[Type[Spider]], task_count: int = 10):
     settings = SettingManager()
     settings.set('MODE', 'auto')
-    task_group: TaskManager = TaskManager(task_pool)
+    task_group: TaskManager = TaskManager(task_count)
     async with Engine(settings) as engine:
         for spider_cls in spiders:
             await task_group.semaphore.acquire()

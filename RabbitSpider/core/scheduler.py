@@ -11,11 +11,11 @@ class Scheduler(object):
         self.connection = None
         self.channel_pool = None
         self.settings = settings
-        self.channel_size = settings.get('CHANNEL_SIZE')
-        self.username = settings.get('RABBIT_USERNAME')
-        self.password = settings.get('RABBIT_PASSWORD')
         self.host = settings.get('RABBIT_HOST')
         self.port = settings.get('RABBIT_PORT')
+        self.username = settings.get('RABBIT_USERNAME')
+        self.password = settings.get('RABBIT_PASSWORD')
+        self.channel_size = settings.get('TASK_COUNT')
         self.virtual_host = settings.get('RABBIT_VIRTUAL_HOST')
 
     @staticmethod
