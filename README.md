@@ -1,13 +1,20 @@
 基于rabbitmq 做消息队列开发的分布式协程爬虫框架，结构用法与scrapy类似
 
-支持批量运行任务，运行模式 auto先生产后消费(适用于单机，运行完自动关闭任务)，m 只生产，w 只消费(一直监听任务)
+支持批量运行任务，运行模式 auto先生产后消费(适用于单机，运行完自动关闭任务)，m 只生产，w 只消费(一直监听任务),支持按目录批量定时运行
 
 使用curl_cffi封装的下载器，支持修改http版本，tls指纹
 
-pip install RabbitSpider==2.7.3
+pip install RabbitSpider==2.7.6
 
 创建项目cmd命令：
     rabbit create [项目名称] [目录名称] [爬虫文件名称]
+
+按目录批量定时运行
+    cd 项目名称
+    rabbit run [目录名称] -p 20 -t "*/10 * * * *"
+
+    -p (可选参数默认10)同时一批运行爬虫数量
+    -t (可选参数)crontab表达式    
 
 自动创建爬虫项目模板
 如：rabbit create shop xxx mama
