@@ -29,6 +29,7 @@ async def go(spider_cls: Type[Spider], mode: str = 'auto', task_count: int = 1):
 async def batch_go(spiders: List[Type[Spider]], task_count: int = 10):
     settings = SettingManager()
     settings.set('MODE', 'auto')
+    settings.set('TASK_COUNT', task_count)
     task_group: TaskManager = TaskManager(task_count)
     async with Engine(settings) as engine:
         for spider_cls in spiders:
