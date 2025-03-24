@@ -119,10 +119,10 @@ class Engine(object):
             else:
                 raise RabbitExpect('执行模式错误！')
         except CancelledError as exc:
-            self.logger.error(f'任务{spider.name}异常: {exc.__class__.__name__}')
+            self.logger.error(f'任务{spider.name}异常: {exc}')
             await spider.subscriber.notify(event.spider_error, exc)
         except Exception as exc:
-            self.logger.error(f'任务{spider.name}异常: {exc.__class__.__name__}')
+            self.logger.error(f'任务{spider.name}异常: {exc}')
             await spider.subscriber.notify(event.spider_error, exc)
         else:
             await spider.subscriber.notify(event.spider_closed)
