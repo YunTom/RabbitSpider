@@ -127,3 +127,5 @@ class Engine(object):
         else:
             await spider.subscriber.notify(event.spider_closed)
             self.logger.info(f'任务{spider.name}结束')
+        finally:
+            await spider.session.close()
