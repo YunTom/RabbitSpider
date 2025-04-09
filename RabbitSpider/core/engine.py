@@ -26,7 +26,7 @@ class Engine(object):
         loop.set_exception_handler(self.custom_exception_handler)
 
     def custom_exception_handler(self, _loop, context):
-        self.logger.error(f"Exception type: {context['exception'].__class__.__name__} : {context['exception']}", context['future'].get_name())
+        self.logger.error(f"Exception type: {context['exception'].__class__.__name__} : {context['exception']}")
         try:
             for task in asyncio.all_tasks():
                 task.cancel()
