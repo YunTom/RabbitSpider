@@ -36,7 +36,7 @@ class Scheduler(object):
     @retry_exception
     async def connect(self):
         self.connection = await connect_robust(host=self.host, login=self.username, password=self.password,
-                                               virtualhost=self.virtual_host, timeout=60)
+                                               virtualhost=self.virtual_host, heartbeat=60, timeout=60)
         self.channel_pool = pool.Pool(self.connection.channel, max_size=self.channel_size)
 
     @retry_exception
