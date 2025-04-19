@@ -6,12 +6,12 @@ from w3lib.encoding import http_content_type_encoding, html_to_unicode
 
 
 class Response:
-    def __init__(self, res):
-        self.body = self.content = res.content
-        self.status = self.status_code = res.status_code
-        self.charset = res.charset
-        self.headers = {k: v for k, v in res.headers.items()}
-        self.cookies = {k: v for k, v in res.cookies.items()}
+    def __init__(self, status_code, headers, cookies, charset, content):
+        self.content = content
+        self.charset = charset
+        self.status_code = status_code
+        self.headers = {k: v for k, v in headers.items()}
+        self.cookies = {k: v for k, v in cookies.items()}
         self.__r = parsel.Selector(self.text)
 
     @property
@@ -26,7 +26,7 @@ class Response:
                     benc = http_content_type_encoding(self.headers['Content-Type'])
                     if benc:
                         charset = 'charset=%s' % benc
-                        text = html_to_unicode(charset, self.body)[1]
+                        text = html_to_unicode(charset, self.content)[1]
                     else:
                         raise UnicodeDecodeError
                 except (UnicodeDecodeError, KeyError):

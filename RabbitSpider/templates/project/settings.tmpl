@@ -1,5 +1,4 @@
 from ${project} import default_path
-from curl_cffi import CurlHttpVersion
 
 BOT_DIR = default_path
 
@@ -23,11 +22,6 @@ MIDDLEWARES = [
 
 # 管道
 ITEM_PIPELINES = ['${project}.pipelines.Pipeline']
-
-# http版本
-HTTP_VERSION = CurlHttpVersion.V2TLS
-# tls指纹
-IMPERSONATE = 'chrome120'
 
 # 日志
 # LOG_LEVEL = 'WARNING'

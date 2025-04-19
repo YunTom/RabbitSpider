@@ -109,9 +109,9 @@ class PipelineManager(object):
 class MiddlewareManager(object):
     def __init__(self, settings):
         self.settings = settings
+        self.download = CurlDownload()
         self.methods: Dict[str, List[Callable]] = defaultdict(list)
         self._add_middleware(settings.getlist('MIDDLEWARES'))
-        self.download = CurlDownload(settings)
 
     def _add_middleware(self, middlewares):
         for middleware in middlewares:
