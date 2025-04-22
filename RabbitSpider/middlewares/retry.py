@@ -9,12 +9,12 @@ class RetryMiddleware(BaseMiddleware):
         self.max_retry = settings.get('MAX_RETRY')
 
     async def process_response(self, request, response, spider):
-        if response.status in self.retry_http_code:
+        if response.status_code in self.retry_http_code:
             if request.retry_times < self.max_retry:
                 request.retry_times += 1
                 return request
             else:
-                self.logger.warning(f'丢弃{request.to_dict()}，状态码：{response.status}',spider.name)
+                self.logger.warning(f'丢弃{request.to_dict()}，状态码：{response.status_code}',spider.name)
                 return True
 
     async def process_exception(self, request, exc, spider):
