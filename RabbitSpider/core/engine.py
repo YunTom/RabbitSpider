@@ -94,8 +94,8 @@ class Engine(object):
 
     async def deal_resp(self, spider, incoming_message: IncomingMessage):
         request = Request(**pickle.loads(incoming_message.body))
-        self.logger.info(f'消费数据：{request.to_dict()}', spider.name)
         await spider.subscriber.notify(event.request_received, request)
+        self.logger.info(f'消费数据：{request.to_dict()}', spider.name)
         request, response = await self.middlewares.send(spider, request)
         if response:
             await spider.subscriber.notify(event.response_received, response)
