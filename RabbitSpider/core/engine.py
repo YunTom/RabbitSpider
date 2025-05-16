@@ -21,7 +21,6 @@ class Engine(object):
         self.pipeline = PipelineManager(settings)
         self.middlewares = MiddlewareManager(settings)
         self.task_count: int = settings.get('TASK_COUNT')
-        self.task_manager: TaskManager = TaskManager(self.task_count)
         loop = asyncio.get_running_loop()
         loop.set_exception_handler(self.custom_exception_handler)
 
@@ -77,13 +76,14 @@ class Engine(object):
         await self.routing(spider, spider.start_requests())
 
     async def crawl(self, spider):
+        task_manager: TaskManager = TaskManager(self.task_count)
         while True:
             incoming_message: IncomingMessage = await self.scheduler.consumer(spider)
             if incoming_message:
-                await self.task_manager.semaphore.acquire()
-                self.task_manager.create_task(self.deal_resp(spider, incoming_message))
+                await task_manager.semaphore.acquire()
+                task_manager.create_task(self.deal_resp(spider, incoming_message))
             else:
-                if self.task_manager.all_done():
+                if task_manager.all_done():
                     await self.scheduler.delete_queue(spider.name)
                     break
 
