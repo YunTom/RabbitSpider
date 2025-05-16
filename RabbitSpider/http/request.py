@@ -39,6 +39,10 @@ class Request(object):
             raise ValueError(f'请检查url是否正确{self._url}')
         return self._url
 
+    @url.setter
+    def url(self, value):
+        self._url = value
+
     @property
     def meta(self):
         return self._meta if self._meta else {}
