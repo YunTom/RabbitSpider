@@ -12,7 +12,7 @@ class Request(object):
                  headers: dict | None = None,
                  cookies: dict | None = None,
                  proxy: str | None = None,
-                 timeout: int | None = None,
+                 timeout: int = 60,
                  allow_redirects: bool = True,
                  callback: str | Callable = 'parse',
                  retry_times: int = 0,
