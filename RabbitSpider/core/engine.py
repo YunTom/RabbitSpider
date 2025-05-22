@@ -21,16 +21,6 @@ class Engine(object):
         self.pipeline = PipelineManager(settings)
         self.middlewares = MiddlewareManager(settings)
         self.task_count: int = settings.get('TASK_COUNT')
-        loop = asyncio.get_running_loop()
-        loop.set_exception_handler(self.custom_exception_handler)
-
-    def custom_exception_handler(self, _loop, context):
-        self.logger.error(f"Exception type: {context['exception'].__class__.__name__} : {context['exception']}")
-        try:
-            for task in asyncio.all_tasks():
-                task.cancel()
-        except RuntimeError:
-            pass
 
     async def __aenter__(self):
         await self.scheduler.connect()
@@ -76,7 +66,7 @@ class Engine(object):
         await self.routing(spider, spider.start_requests())
 
     async def crawl(self, spider):
-        task_manager: TaskManager = TaskManager(self.task_count)
+        task_manager = TaskManager(self.task_count)
         while True:
             incoming_message: IncomingMessage = await self.scheduler.consumer(spider)
             if incoming_message:
@@ -93,17 +83,22 @@ class Engine(object):
         await asyncio.Future()
 
     async def deal_resp(self, spider, incoming_message: IncomingMessage):
-        request = Request(**pickle.loads(incoming_message.body))
-        await spider.subscriber.notify(event.request_received, request)
-        self.logger.info(f'消费数据：{request.to_dict()}', spider.name)
-        request, response = await self.middlewares.send(spider, request)
-        if response:
-            await spider.subscriber.notify(event.response_received, response)
-            result = getattr(spider, request.callback)(request, response)
-            result and await self.routing(spider, result)
-        elif request:
-            await self.routing(spider, request)
-        await incoming_message.ack()
+        try:
+            request = Request(**pickle.loads(incoming_message.body))
+            await spider.subscriber.notify(event.request_received, request)
+            self.logger.info(f'消费数据：{request.to_dict()}', spider.name)
+            request, response = await self.middlewares.send(spider, request)
+            if response:
+                await spider.subscriber.notify(event.response_received, response)
+                result = getattr(spider, request.callback)(request, response)
+                result and await self.routing(spider, result)
+            elif request:
+                await self.routing(spider, request)
+            await incoming_message.ack()
+        except Exception as e:
+            self.logger.exception(e, spider.name)
+            for task in asyncio.all_tasks():
+                task.cancel()
 
     async def start(self, spider):
         self.logger.info(f'任务{spider.name}启动')
