@@ -33,3 +33,7 @@ class Logger(object):
     def error(self, msg, scope='RabbitSpider'):
         self._logger = logger.bind(scope=scope)
         self._logger.error(msg)
+
+    def exception(self, msg, scope='RabbitSpider'):
+        self._logger = logger.bind(scope=scope)
+        self._logger.exception(msg)
