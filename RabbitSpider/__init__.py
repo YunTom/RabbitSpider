@@ -1,17 +1,10 @@
 import os
 import sys
-import asyncio
 from RabbitSpider.items.item import BaseItem
 from RabbitSpider.http.request import Request
 from RabbitSpider.http.response import Response
 from RabbitSpider.rabbit_execute import go, batch_go
 
-if sys.platform == 'win32':
-    asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
-else:
-    import uvloop
-
-    asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 
 sys.path.append(os.path.abspath(os.path.join(os.path.abspath(sys.argv[0]), '..')))
 sys.path.append(os.path.abspath(os.path.join(os.path.abspath(sys.argv[0]), '../..')))
