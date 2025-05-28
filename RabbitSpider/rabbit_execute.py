@@ -44,30 +44,35 @@ async def batch_go(spiders: List[Type[Spider]], task_count: int = 10):
                 await asyncio.sleep(1)
 
 
-def runner(directory, task_pool, cron_expression):
-    cls_list = []
-    next_time = None
-    sys.path.append(os.path.abspath('.'))
-    sys.path.append(os.path.abspath('..'))
-    for filename in os.listdir(os.path.join('spiders', directory)):
-        if filename.endswith('.py'):
-            with open(os.path.join('spiders', directory, filename), 'r', encoding='utf-8') as file:
-                classname = re.findall(r'class\s.*?(\w+)\s*?\(\w+\)', file.read())[0]
-                spec = spec_from_file_location(classname, os.path.join('spiders', directory, filename))
+def runner(spider_dir, task_pool, cron_expr):
+    spider_classes = []
+    loop = asyncio.get_event_loop()
+    spider_path = os.path.join('spiders', spider_dir)
+    sys.path.extend([os.path.abspath('.'), os.path.abspath('..')])
+
+    for script_name in os.listdir(spider_path):
+        if script_name.endswith('.py') and not script_name.startswith('__'):
+            script_path = os.path.join(spider_path, script_name)
+            with open(script_path, 'r', encoding='utf-8') as file:
+                class_name = re.findall(r'class\s+(\w+)\s*\(\w+\)', file.read())[0]
+                spec = spec_from_file_location(class_name, script_path)
                 module = module_from_spec(spec)
                 spec.loader.exec_module(module)
-                cls_list.append(getattr(module, classname))
+                spider_classes.append(getattr(module, class_name))
 
-    if croniter.is_valid(cron_expression):
-        cron = croniter(cron_expression, datetime.now()).all_next(datetime)
+    if croniter.is_valid(cron_expr):
+        cron_schedule = croniter(cron_expr, datetime.now())
+        next_run_time = cron_schedule.get_next(datetime)
+        print(f'下次运行时间：{next_run_time}')
         while True:
-            now_time = datetime.strptime(datetime.now().strftime('%Y-%m-%d %H:%M'), '%Y-%m-%d %H:%M')
-            if now_time == next_time:
-                asyncio.run(batch_go(cls_list, task_pool))
-            if not next_time or next_time <= now_time:
-                next_time = next(cron)
-                print(f'下次运行时间：{next_time}')
+            now_time = datetime.now().replace(second=0, microsecond=0)
+            if now_time == next_run_time:
+                loop.run_until_complete(batch_go(spider_classes, task_pool))
+            if next_run_time <= now_time:
+                next_run_time = cron_schedule.get_next(datetime)
+                print(f'下次运行时间：{next_run_time}')
             else:
                 time.sleep(5)
     else:
-        asyncio.run(batch_go(cls_list, task_pool))
+        loop.run_until_complete(batch_go(spider_classes, task_pool))
+        loop.close()
