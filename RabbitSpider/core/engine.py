@@ -1,5 +1,6 @@
 import pickle
 import asyncio
+from traceback import print_exc
 from asyncio import CancelledError
 from aio_pika import IncomingMessage
 from RabbitSpider.utils import event
@@ -96,7 +97,7 @@ class Engine(object):
                 await self.routing(spider, request)
             await incoming_message.ack()
         except Exception as e:
-            self.logger.exception(e, spider.name)
+            print_exc()
             for task in asyncio.all_tasks():
                 task.cancel()
 
