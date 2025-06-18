@@ -4,7 +4,7 @@ from RabbitSpider.utils.log import Logger
 from RabbitSpider.utils.control import SettingManager
 
 
-class BaseMiddleware:
+class BaseMiddleware(object):
     def __init__(self, settings):
         self.logger = Logger(settings)
         self.settings: SettingManager = settings
