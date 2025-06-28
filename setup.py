@@ -23,6 +23,5 @@ setuptools.setup(
         'parsel>=1.9.1',
         'w3lib>=2.1.2',
         'chardet>=5.2.0',
-        'croniter>=2.0.5'
     ],
 )
