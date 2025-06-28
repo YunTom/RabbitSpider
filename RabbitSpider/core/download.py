@@ -1,14 +1,20 @@
+import random
 from RabbitSpider import Response
 from curl_cffi import CurlHttpVersion
+from curl_cffi.requests import BrowserType
+from curl_cffi.requests import AsyncSession
 from RabbitSpider.exceptions import RabbitExpect
 
 
 class CurlDownload(object):
     def __init__(self):
-        self.impersonate = 'chrome120'
+        self.impersonate = None
         self.http_version = CurlHttpVersion.V2TLS
 
-    async def fetch(self, session, request) -> Response:
+    async def fetch(self, session: AsyncSession, request: dict) -> Response:
+        if not (len(session.headers.keys()) or request.get('headers')):
+            self.impersonate = random.choice(list(BrowserType)).value
+
         if request['method'].upper() == 'GET':
             res = await session.get(request['url'],
                                     params=request.get('params'), cookies=request.get('cookies'),
