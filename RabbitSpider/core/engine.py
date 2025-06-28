@@ -1,14 +1,14 @@
+import sys
 import pickle
-import asyncio
 from traceback import print_exc
-from asyncio import CancelledError
 from aio_pika import IncomingMessage
+from asyncio import Future, CancelledError
+from typing import AsyncGenerator, Coroutine
 from RabbitSpider.utils import event
 from RabbitSpider.utils.log import Logger
 from RabbitSpider import Request, BaseItem
 from RabbitSpider.exceptions import RabbitExpect
 from RabbitSpider.core.scheduler import Scheduler
-from typing import AsyncGenerator, Coroutine, Generator
 from RabbitSpider.utils.control import MiddlewareManager, FilterManager, PipelineManager, TaskManager
 
 
@@ -22,6 +22,7 @@ class Engine(object):
         self.pipeline = PipelineManager(settings)
         self.middlewares = MiddlewareManager(settings)
         self.task_count: int = settings.get('TASK_COUNT')
+        self.task_manager = TaskManager(self.task_count)
 
     async def __aenter__(self):
         await self.scheduler.connect()
@@ -49,9 +50,6 @@ class Engine(object):
         if isinstance(result, AsyncGenerator):
             async for r in result:
                 await rule(r)
-        elif isinstance(result, Generator):
-            for r in result:
-                await rule(r)
         elif isinstance(result, Coroutine):
             await rule(await result)
         elif isinstance(result, Request):
@@ -67,21 +65,20 @@ class Engine(object):
         await self.routing(spider, spider.start_requests())
 
     async def crawl(self, spider):
-        task_manager = TaskManager(self.task_count)
         while True:
             incoming_message: IncomingMessage = await self.scheduler.consumer(spider)
             if incoming_message:
-                await task_manager.semaphore.acquire()
-                task_manager.create_task(self.deal_resp(spider, incoming_message))
+                await self.task_manager.semaphore.acquire()
+                self.task_manager.create_task(self.deal_resp(spider, incoming_message))
             else:
-                if task_manager.all_done():
+                if self.task_manager.all_done():
                     await self.scheduler.delete_queue(spider.name)
                     break
 
     async def consume(self, spider):
         await self.scheduler.consumer(spider, callback=self.deal_resp,
                                       prefetch=self.task_count)
-        await asyncio.Future()
+        await Future()
 
     async def deal_resp(self, spider, incoming_message: IncomingMessage):
         try:
@@ -96,10 +93,9 @@ class Engine(object):
             elif request:
                 await self.routing(spider, request)
             await incoming_message.ack()
-        except Exception as e:
+        except Exception as exc:
             print_exc()
-            for task in asyncio.all_tasks():
-                task.cancel()
+            sys.exit(exc.__class__.__name__)
 
     async def start(self, spider):
         self.logger.info(f'任务{spider.name}启动')
