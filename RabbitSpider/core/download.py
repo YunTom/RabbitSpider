@@ -1,4 +1,5 @@
 import random
+from user_agents import parse
 from RabbitSpider import Response
 from curl_cffi import CurlHttpVersion
 from curl_cffi.requests import BrowserType
@@ -9,11 +10,19 @@ from RabbitSpider.exceptions import RabbitExpect
 class CurlDownload(object):
     def __init__(self):
         self.impersonate = None
+        self.default_headers = False
         self.http_version = CurlHttpVersion.V2TLS
 
     async def fetch(self, session: AsyncSession, request: dict) -> Response:
         if not (len(session.headers.keys()) or request.get('headers')):
+            self.default_headers = True
             self.impersonate = random.choice(list(BrowserType)).value
+        else:
+            user_agent = session.headers.get('user-agent') or request.get('headers').get('user-agent')
+            ua = parse(user_agent)
+            browser_type = (ua.browser.family + ua.browser.version_string).lower().split('.')[0]
+            if browser_type in BrowserType:
+                self.impersonate = browser_type
 
         if request['method'].upper() == 'GET':
             res = await session.get(request['url'],
@@ -22,7 +31,8 @@ class CurlDownload(object):
                                     allow_redirects=request.get('allow_redirects', True),
                                     http_version=self.http_version,
                                     impersonate=self.impersonate,
-                                    timeout=request.get('timeout')
+                                    timeout=request.get('timeout'),
+                                    default_headers=self.default_headers
                                     )
 
         elif request['method'].upper() == 'POST':
@@ -33,7 +43,9 @@ class CurlDownload(object):
                                      http_version=self.http_version,
                                      impersonate=self.impersonate,
                                      allow_redirects=request.get('allow_redirects', True),
-                                     timeout=request.get('timeout'))
+                                     timeout=request.get('timeout'),
+                                     default_headers=self.default_headers
+                                     )
 
         else:
             raise RabbitExpect(f"{request['method']}请求方式未定义，请自定义添加！")
