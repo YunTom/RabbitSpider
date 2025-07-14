@@ -3,9 +3,9 @@ from typing import Callable
 
 
 class Request(object):
-    __slots__ = [
+    __slots__ = (
         '_url', 'params', 'data', 'json', 'method', 'headers', 'cookies', 'proxy', 'timeout', 'allow_redirects',
-        '_callback', 'retry_times', '_meta']
+        '_callback', 'retry_times', '_meta')
     
     def __init__(self,
                  url: str,
