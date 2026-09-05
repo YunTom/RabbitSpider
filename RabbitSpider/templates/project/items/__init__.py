@@ -1,0 +1,5 @@
+# from RabbitSpider import BaseItem
+#
+#
+# class Item(BaseItem):
+#     field: str = None

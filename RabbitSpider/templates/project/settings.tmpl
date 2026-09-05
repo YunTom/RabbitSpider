@@ -1,0 +1,36 @@
+from ${project} import default_path
+from RabbitSpider.core.downloader import CurlHttpDownloader
+
+BOT_DIR = default_path
+
+# Rabbitmq
+RABBIT_HOST = '127.0.0.1'
+RABBIT_PORT = 5672
+RABBIT_USERNAME = 'yuntom'
+RABBIT_PASSWORD = '123456'
+RABBIT_VIRTUAL_HOST = '/'
+
+#Redis
+REDIS_HOST = '127.0.0.1'
+REDIS_PORT = 6379
+REDIS_DB = 0
+REDIS_PASSWORD = '123456'
+
+# 日志
+# LOG_LEVEL = 'WARNING'
+# LOG_FILE = './rabbit_log'
+
+# 下载器
+DOWNLOADER = CurlHttpDownloader
+
+# 延时下载
+# DOWNLOAD_DELAY = (1, 3)
+
+# 最大重试次数
+MAX_RETRY = 5
+# 重试状态码
+RETRY_HTTP_CODES = []
+# 异常重试
+RETRY_EXCEPTIONS = ['ProxyError', 'SSLError']
+# 允许通过状态码
+ALLOW_HTTP_CODES = [200]
